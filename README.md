@@ -6,18 +6,13 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Status](https://img.shields.io/badge/status-research%20prototype-orange)](#project-status)
 
+<p align="center">
+  <img src="docs/assets/gleneck-banner.png" alt="GLE-NECK project graphic" width="420">
+</p>
+
 GLE-NECK is a differentiable coarse-grained transport framework for learning non-equilibrium corrections to an equilibrium generalized Langevin equation (GLE). The central use case is a system where an equilibrium coarse-grained GLE reproduces static structure and equilibrium time correlations, but does not reproduce the all-atom drift response under external driving.
 
 This repository contains a cleaned, publication-oriented implementation for the bulk transport workflow, compact processed artifacts, and scripts for reproducing the current thesis/manuscript figures. Raw trajectories, exploratory notebooks, draft PDFs, private cluster paths, and large diagnostic runs are intentionally excluded.
-
-<!--
-Project graphic:
-Save the GLE-NECK banner as docs/assets/gleneck-banner.png, then uncomment this block.
-
-<p align="center">
-  <img src="docs/assets/gleneck-banner.png" alt="GLE-NECK project graphic" width="520">
-</p>
--->
 
 ## Scientific Idea
 

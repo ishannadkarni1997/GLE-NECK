@@ -1,11 +1,9 @@
 # Repository Assets
 
-Place public repository artwork in this directory.
+This directory contains public-facing repository artwork used by the root README.
 
-Suggested banner filename:
+Current asset:
 
 ```text
 docs/assets/gleneck-banner.png
 ```
-
-After the banner is committed, uncomment the image block near the top of the root `README.md`.

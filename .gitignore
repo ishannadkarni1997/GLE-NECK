@@ -1,0 +1,37 @@
+.DS_Store
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+
+# Local environments
+.venv/
+venv/
+env/
+
+# Generated outputs
+outputs/
+runs/
+slurm_logs/
+*.log
+
+# Raw/private simulation data
+data/raw/
+data/private/
+data/interim/
+data_private/
+**/trajectory_data*/
+**/training_data/
+*.pkl
+*.mp4
+
+# Draft/private literature and presentation assets
+refs/
+*.pdf
+*.pptx
+~$*
+
+# Build metadata
+*.egg-info/

@@ -1,0 +1,19 @@
+#!/bin/bash
+#SBATCH --job-name=gleneck-gpu
+#SBATCH --partition=<gpu-partition>
+#SBATCH --gres=gpu:1
+#SBATCH --cpus-per-task=8
+#SBATCH --mem=64G
+#SBATCH --time=24:00:00
+#SBATCH --output=slurm_logs/%x-%j.out
+#SBATCH --error=slurm_logs/%x-%j.err
+
+set -euo pipefail
+
+cd $GLENECK_WORKSPACE/repo
+
+# TODO: replace these with cluster-specific module/conda commands after inspection.
+# module load cuda
+# conda activate gleneck-jax
+
+python "$@"

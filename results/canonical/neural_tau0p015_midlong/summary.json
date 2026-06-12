@@ -1,0 +1,12 @@
+{
+  "label": "neural_tau0p015_midlong",
+  "system": "bulk",
+  "kernel_model": "asym_softmax_poly",
+  "kernel_tau_prior_ps": 0.015,
+  "poly_degree": 1,
+  "l_max": 500,
+  "training_fields": [0.5, 1.0, 2.0],
+  "best_loss": 2.45053328569004e-18,
+  "status": "promoted_current_candidate",
+  "caveat": "The corrective kernel decays faster than the audited equilibrium memory; this is retained as the current empirical candidate pending theory refinement."
+}

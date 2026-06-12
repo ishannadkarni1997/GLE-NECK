@@ -1,0 +1,30 @@
+name: neural_tau0p015_midlong
+system: bulk
+description: Current promoted GLE-NECK MPT candidate for publication-prep figures.
+
+aa_targets:
+  thermostat: langevin-peculiar
+  langevin_mode: solvent-yz
+  drift_reference: solvent
+  notes: Use compact processed targets committed under data/processed for figure reproduction; raw trajectories stay private.
+
+gle:
+  dt_fs: 1.0
+  l_max: 500
+  memory_orig_interval: 10.0
+  warmup_steps: 5000
+  steps_per_loss: 5000
+  drift_window: 1000
+
+neck:
+  kernel_model: asym_softmax_poly
+  zero_field_gate: E^2
+  poly_degree: 1
+  kernel_tau_prior_ps: 0.015
+  training_fields: [0.5, 1.0, 2.0]
+  optimizer: adam
+  epochs: 800
+
+status:
+  promoted: true
+  caveat: Corrective memory decays faster than the audited equilibrium memory; treat as empirical candidate pending theory refinement.

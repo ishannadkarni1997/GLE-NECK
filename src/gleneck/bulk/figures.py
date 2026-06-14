@@ -225,8 +225,8 @@ def plot_gle_baseline_benchmark(data_dir: Path, output_dir: Path) -> list[Path]:
     ax = axes[2]
     aa_tau = _array(aa_vacf, "time_ps")
     gle_tau = _array(gle_vacf, "time_ps")
-    aa_keep = aa_tau <= 2.0
-    gle_keep = gle_tau <= 2.0
+    aa_keep = aa_tau <= 200.0
+    gle_keep = gle_tau <= 200.0
     ax.plot(aa_tau[aa_keep], _array(aa_vacf, "vacf")[aa_keep], color=MODEL_COLORS["aa"], label="All-atom")
     ax.plot(
         gle_tau[gle_keep],
@@ -235,7 +235,7 @@ def plot_gle_baseline_benchmark(data_dir: Path, output_dir: Path) -> list[Path]:
         linestyle="-.",
         label="GLE",
     )
-    ax.set_xlim(0.0, 2.0)
+    ax.set_xlim(0.0, 200.0)
     ax.set_xlabel(r"$\tau$ (ps)")
     ax.set_ylabel(r"Normalized VACF, $C(\tau)$")
     ax.set_title("Bulk VACF")

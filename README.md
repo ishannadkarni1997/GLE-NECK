@@ -40,7 +40,7 @@ The generated figures are written to `figures/bulk/` as both PNG and PDF:
 | Figure | Purpose |
 | --- | --- |
 | `01_aa_equilibrium_targets` | AA RDF targets, including solvent-solvent diagnostic RDF, and IBI/PMF solute potentials |
-| `02_gle_baseline_benchmark` | Baseline GLE RDF, memory kernel, and VACF validation |
+| `02_gle_baseline_benchmark` | Baseline GLE RDF, memory kernel, and long-window VACF validation |
 | `03_baseline_mobility` | AA mobility target versus equilibrium GLE response |
 | `04_spt_vs_mpt_loss` | Single-point and multi-point corrective-kernel training losses |
 | `05_spt_vs_mpt_mobility` | AA, baseline GLE, SPT, and MPT mobility curves over the promoted `E <= 2` regime |

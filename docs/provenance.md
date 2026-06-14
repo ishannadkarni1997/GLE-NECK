@@ -19,6 +19,8 @@ This document records the public provenance for the promoted bulk result.
 - `gle_baseline_rdf.csv` and `gle_baseline_vacf.csv`: baseline retained-solute GLE validation outputs.
 - `gle_baseline_mobility.csv`: baseline non-equilibrium response before adding GLE-NECK.
 
+The public baseline VACF artifacts are stored on a long `~204 ps` grid; the baseline figure displays the validated `0-200 ps` window.
+
 ## Promoted GLE-NECK Candidate
 
 - Corrective model: neural/asymptotic memory correction.

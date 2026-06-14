@@ -31,9 +31,12 @@ The public baseline VACF artifacts are stored on a long `~204 ps` grid; the base
 - Promoted artifacts:
   - `gleneck_mpt_mobility.csv`
   - `gleneck_mpt_training_loss.csv`
+  - `gleneck_validation_loss.csv`
   - `gleneck_kernel_evolution.npz`
 
 The corrective kernel gives a strong mobility match over the selected training regime. It also decays faster than the equilibrium memory kernel. This is retained as a current modeling caveat and should be discussed explicitly in any paper or thesis text that uses the result.
+
+The validation-loss panel is a post-hoc metric computed from saved final mobility curves, not an additional training run. For each SPT or MPT model, validation MSE is evaluated against AA mobility over the promoted `E <= 2` field regime after excluding that model's training fields.
 
 The field-conditioned-kernel figure shows the exact trained kernels at `E = 0.5, 1.0, 2.0`, the zero-field limit imposed by the `E^2` gate, and linear field interpolation at intermediate 0.25-spaced visualization points. The intermediate curves are for presentation of the learned field dependence, not additional training simulations.
 

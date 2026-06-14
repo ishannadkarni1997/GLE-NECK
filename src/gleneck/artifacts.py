@@ -27,6 +27,7 @@ BULK_ARTIFACTS: tuple[ArtifactSpec, ...] = (
     ArtifactSpec("gle_baseline_mobility.csv", ("field", "drift_velocity")),
     ArtifactSpec("gleneck_mpt_mobility.csv", ("field", "drift_velocity")),
     ArtifactSpec("gleneck_mpt_training_loss.csv", ("epoch", "loss")),
+    ArtifactSpec("gleneck_validation_loss.csv", ("model", "training_fields", "eval_max_field", "train_mse", "validation_mse", "full_mse")),
     ArtifactSpec("gleneck_kernel_evolution.npz"),
     ArtifactSpec("bulk_result_summary.json"),
     ArtifactSpec("gleneck_spt_mobility.csv", ("field", "drift_velocity", "training_field"), required=False),

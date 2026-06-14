@@ -143,6 +143,40 @@ def _interpolate_kernels_by_field(fields: np.ndarray, kernels: np.ndarray, targe
     return np.asarray(interpolated)
 
 
+def _mobility_mse(
+    aa_table,
+    pred_fields: np.ndarray,
+    pred_drifts: np.ndarray,
+    *,
+    train_fields: tuple[float, ...],
+    max_field: float = 2.0,
+) -> dict[str, float]:
+    aa_fields = _array(aa_table, "field")
+    aa_drifts = _array(aa_table, "drift_velocity")
+    matched: list[tuple[float, float, float]] = []
+    for field, aa_drift in zip(aa_fields, aa_drifts):
+        if field > max_field + 1.0e-12:
+            continue
+        pred_index = np.flatnonzero(np.isclose(pred_fields, field))
+        if pred_index.size:
+            matched.append((float(field), float(aa_drift), float(pred_drifts[pred_index[0]])))
+    if not matched:
+        raise ValueError("No common mobility fields found for validation loss.")
+    values = np.asarray(matched, dtype=float)
+    train_mask = np.zeros(values.shape[0], dtype=bool)
+    for field in train_fields:
+        train_mask |= np.isclose(values[:, 0], field)
+    heldout_mask = ~train_mask
+    squared_error = (values[:, 2] - values[:, 1]) ** 2
+    return {
+        "train": float(np.mean(squared_error[train_mask])) if np.any(train_mask) else np.nan,
+        "heldout": float(np.mean(squared_error[heldout_mask])) if np.any(heldout_mask) else np.nan,
+        "full": float(np.mean(squared_error)),
+        "n_train": int(np.sum(train_mask)),
+        "n_heldout": int(np.sum(heldout_mask)),
+    }
+
+
 def plot_aa_equilibrium_targets(data_dir: Path, output_dir: Path) -> list[Path]:
     plt = _pyplot()
     rdf = _read_csv(data_dir / "aa_equilibrium_rdf.csv")
@@ -270,10 +304,15 @@ def plot_baseline_mobility(data_dir: Path, output_dir: Path) -> list[Path]:
 
 def plot_spt_vs_mpt_loss(data_dir: Path, output_dir: Path) -> list[Path]:
     plt = _pyplot()
+    aa_mobility = _read_csv(data_dir / "aa_mobility.csv")
+    baseline_mobility = _read_csv(data_dir / "gle_baseline_mobility.csv")
+    mpt_mobility = _read_csv(data_dir / "gleneck_mpt_mobility.csv")
     mpt = _read_csv(data_dir / "gleneck_mpt_training_loss.csv")
     spt = _load_optional_table(data_dir / "gleneck_spt_training_loss.csv")
+    spt_mobility = _load_optional_table(data_dir / "gleneck_spt_mobility.csv")
 
-    fig, ax = plt.subplots(figsize=(8.0, 5.0))
+    fig, axes = plt.subplots(1, 2, figsize=(13.0, 5.0), gridspec_kw={"width_ratios": [1.35, 1.0]})
+    ax = axes[0]
     if spt is not None:
         epoch = _array(spt, "epoch")
         loss = _array(spt, "loss")
@@ -289,10 +328,59 @@ def plot_spt_vs_mpt_loss(data_dir: Path, output_dir: Path) -> list[Path]:
     ax.plot(_array(mpt, "epoch"), np.clip(_array(mpt, "loss"), 1.0e-18, None), color=MODEL_COLORS["mpt"], label=r"MPT $E=0.5,1.0,2.0$")
     ax.set_yscale("log")
     ax.set_xlabel("Epoch")
-    ax.set_ylabel("MSE drift loss")
-    ax.set_title("Corrective-Kernel Training Loss")
-    ax.legend(frameon=False)
+    ax.set_ylabel("Training MSE")
+    ax.set_title("Optimization objective")
+    ax.legend(frameon=False, fontsize=9)
     _style(ax)
+
+    ax = axes[1]
+    labels: list[str] = []
+    train_losses: list[float] = []
+    heldout_losses: list[float] = []
+    colors: list[str] = []
+    if spt_mobility is not None:
+        fields = _array(spt_mobility, "field")
+        drifts = _array(spt_mobility, "drift_velocity")
+        training = _array(spt_mobility, "training_field")
+        for train_field in sorted(np.unique(training)):
+            mask = np.isclose(training, train_field)
+            metrics = _mobility_mse(aa_mobility, fields[mask], drifts[mask], train_fields=(float(train_field),), max_field=2.0)
+            labels.append(fr"SPT $E={train_field:g}$")
+            train_losses.append(metrics["train"])
+            heldout_losses.append(metrics["heldout"])
+            colors.append(MODEL_COLORS.get(f"spt_{train_field:g}", "0.4"))
+    mpt_metrics = _mobility_mse(
+        aa_mobility,
+        _array(mpt_mobility, "field"),
+        _array(mpt_mobility, "drift_velocity"),
+        train_fields=(0.5, 1.0, 2.0),
+        max_field=2.0,
+    )
+    labels.append(r"MPT")
+    train_losses.append(mpt_metrics["train"])
+    heldout_losses.append(mpt_metrics["heldout"])
+    colors.append(MODEL_COLORS["mpt"])
+
+    x = np.arange(len(labels), dtype=float)
+    width = 0.36
+    ax.bar(x - width / 2, np.clip(train_losses, 1.0e-18, None), width=width, color=colors, alpha=0.45, label="training fields")
+    ax.bar(x + width / 2, np.clip(heldout_losses, 1.0e-18, None), width=width, color=colors, alpha=0.95, hatch="//", label="held-out fields")
+    baseline_metrics = _mobility_mse(
+        aa_mobility,
+        _array(baseline_mobility, "field"),
+        _array(baseline_mobility, "drift_velocity"),
+        train_fields=(),
+        max_field=2.0,
+    )
+    ax.axhline(baseline_metrics["full"], color="0.35", linestyle=":", linewidth=2.2, label="baseline GLE")
+    ax.set_yscale("log")
+    ax.set_xticks(x)
+    ax.set_xticklabels(labels, rotation=18, ha="right")
+    ax.set_ylabel("MSE vs AA mobility")
+    ax.set_title(r"Final mobility loss ($E \leq 2$)")
+    ax.legend(frameon=False, fontsize=9)
+    _style(ax)
+    fig.suptitle("Corrective-Kernel Training and Validation Loss")
     fig.tight_layout()
     paths = _save(fig, output_dir, "04_spt_vs_mpt_loss")
     plt.close(fig)

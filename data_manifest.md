@@ -19,6 +19,7 @@ All files live in `data/processed/bulk/`.
 | `gle_baseline_mobility.csv` | Mobility response of the equilibrium baseline GLE |
 | `gleneck_mpt_mobility.csv` | Promoted multi-point GLE-NECK mobility response |
 | `gleneck_mpt_training_loss.csv` | Promoted multi-point training loss |
+| `gleneck_validation_loss.csv` | Post-hoc train/held-out/full mobility MSE for SPT and MPT models over `E <= 2` |
 | `gleneck_kernel_evolution.npz` | Downsampled corrective-kernel history for public figures |
 | `gleneck_spt_mobility.csv` | Optional single-point mobility curves used in SPT/MPT comparison |
 | `gleneck_spt_training_loss.csv` | Optional single-point training losses used in SPT/MPT comparison |

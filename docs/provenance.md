@@ -20,6 +20,7 @@ This document records the public provenance for the promoted bulk result.
 - `gle_baseline_mobility.csv`: baseline non-equilibrium response before adding GLE-NECK.
 
 The public baseline VACF artifacts are stored on a long `~204 ps` grid; the baseline figure displays the validated `0-200 ps` window.
+The public baseline RDF artifact is the smoothed output of a longer streamed zero-field GLE run, which accumulates RDF histograms without retaining the full position trajectory.
 
 ## Promoted GLE-NECK Candidate
 

@@ -626,7 +626,9 @@ def run_gle(
     seed: int = 0,
     corrective_kernel: Any | None = None,
     history_velocities: Any | None = None,
+    initial_noise_buffer: Any | None = None,
     return_final_state: bool = False,
+    return_noise_buffer: bool = False,
     config: BulkModelConfig = DEFAULT_BULK_MODEL,
 ):
     """Run the retained-solute GLE integrator used for baseline and NECK training."""
@@ -656,7 +658,14 @@ def run_gle(
             hist_v = jnp.concatenate([hist_v, pad], axis=0)
         hist_v = hist_v[: config.l_max]
     key, buffer_key, series_key = jax.random.split(key, 3)
-    wn_buf = jax.random.normal(buffer_key, (config.l_max, config.n_cg, 3), dtype=jnp.float64)
+    if initial_noise_buffer is None:
+        wn_buf = jax.random.normal(buffer_key, (config.l_max, config.n_cg, 3), dtype=jnp.float64)
+    else:
+        wn_buf = jnp.asarray(initial_noise_buffer, dtype=jnp.float64)
+        if wn_buf.shape[0] < config.l_max:
+            pad = jnp.tile(wn_buf[-1:, :, :], (config.l_max - wn_buf.shape[0], 1, 1))
+            wn_buf = jnp.concatenate([wn_buf, pad], axis=0)
+        wn_buf = wn_buf[: config.l_max]
     xi_series = (
         jax.random.normal(series_key, (steps, config.n_cg, 3), dtype=jnp.float64)
         * config.noise_scale
@@ -703,6 +712,8 @@ def run_gle(
         _split_transpose=True,
     )
     if return_final_state:
+        if return_noise_buffer:
+            return sampled_positions_array, sampled_velocities_array, (pos, vel, hist_v, wn_buf)
         return sampled_positions_array, sampled_velocities_array, (pos, vel, hist_v)
     return sampled_positions_array, sampled_velocities_array
 

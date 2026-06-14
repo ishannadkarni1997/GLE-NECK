@@ -267,18 +267,45 @@ def compute_retained_rdfs(
     config: BulkAATargetConfig,
 ) -> tuple[np.ndarray, dict[str, np.ndarray]]:
     """Compute A-A, B-B, and A-B RDFs for retained solutes."""
-    box = np.asarray(config.box_size, dtype=float)
+    centers, histograms, n_frames = accumulate_retained_rdf_histograms(retained_positions, config)
+    return centers, normalize_retained_rdf_histograms(histograms, n_frames, config)
+
+
+def retained_rdf_grid(config: BulkAATargetConfig) -> tuple[np.ndarray, np.ndarray]:
+    """Return RDF bin edges and centers for the retained solutes."""
     edges = np.arange(0.0, config.rdf_cutoff + config.rdf_dr, config.rdf_dr)
     centers = 0.5 * (edges[:-1] + edges[1:])
-    shell_volumes = (4.0 / 3.0) * math.pi * (edges[1:] ** 3 - edges[:-1] ** 3)
-    volume = float(np.prod(box))
+    return edges, centers
+
+
+def empty_retained_rdf_histograms(config: BulkAATargetConfig) -> dict[str, np.ndarray]:
+    """Create empty A-A, B-B, and A-B RDF histograms."""
+    _, centers = retained_rdf_grid(config)
+    return {
+        "g_r_AA": np.zeros_like(centers),
+        "g_r_BB": np.zeros_like(centers),
+        "g_r_AB": np.zeros_like(centers),
+    }
+
+
+def accumulate_retained_rdf_histograms(
+    retained_positions: np.ndarray,
+    config: BulkAATargetConfig,
+    histograms: dict[str, np.ndarray] | None = None,
+) -> tuple[np.ndarray, dict[str, np.ndarray], int]:
+    """Accumulate retained-solute RDF pair histograms without storing all samples."""
+    box = np.asarray(config.box_size, dtype=float)
+    edges, centers = retained_rdf_grid(config)
     species = retained_species(config)
     a_idx = np.where(species == 0)[0]
     b_idx = np.where(species == 1)[0]
-    n_frames = retained_positions.shape[0]
-
-    histograms = {"g_r_AA": np.zeros_like(centers), "g_r_BB": np.zeros_like(centers), "g_r_AB": np.zeros_like(centers)}
-    for frame in retained_positions:
+    positions = np.asarray(retained_positions, dtype=float)
+    if positions.ndim != 3 or positions.shape[-1] != 3:
+        raise ValueError("retained_positions must have shape (T, N, 3).")
+    n_frames = int(positions.shape[0])
+    if histograms is None:
+        histograms = empty_retained_rdf_histograms(config)
+    for frame in positions:
         for key, i_idx, j_idx, same in (
             ("g_r_AA", a_idx, a_idx, True),
             ("g_r_BB", b_idx, b_idx, True),
@@ -286,6 +313,20 @@ def compute_retained_rdfs(
         ):
             distances = _pair_distances(frame, i_idx, j_idx, box, same=same)
             histograms[key] += np.histogram(distances, bins=edges)[0]
+    return centers, histograms, n_frames
+
+
+def normalize_retained_rdf_histograms(
+    histograms: dict[str, np.ndarray],
+    n_frames: int,
+    config: BulkAATargetConfig,
+) -> dict[str, np.ndarray]:
+    """Normalize retained-solute RDF histograms into g(r)."""
+    if n_frames <= 0:
+        raise ValueError("n_frames must be positive.")
+    edges, centers = retained_rdf_grid(config)
+    shell_volumes = (4.0 / 3.0) * math.pi * (edges[1:] ** 3 - edges[:-1] ** 3)
+    volume = float(np.prod(np.asarray(config.box_size, dtype=float)))
 
     rho_a = config.n_a / volume
     rho_b = config.n_b / volume
@@ -294,8 +335,15 @@ def compute_retained_rdfs(
         "g_r_BB": n_frames * config.n_b * rho_b * shell_volumes / 2.0,
         "g_r_AB": n_frames * config.n_a * rho_b * shell_volumes,
     }
-    rdfs = {key: np.divide(hist, normalizers[key], out=np.zeros_like(hist), where=normalizers[key] > 0) for key, hist in histograms.items()}
-    return centers, rdfs
+    return {
+        key: np.divide(
+            np.asarray(histograms[key], dtype=float),
+            normalizers[key],
+            out=np.zeros_like(centers),
+            where=normalizers[key] > 0,
+        )
+        for key in ("g_r_AA", "g_r_BB", "g_r_AB")
+    }
 
 
 def compute_same_species_rdf(

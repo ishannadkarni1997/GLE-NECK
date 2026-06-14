@@ -18,11 +18,6 @@ class BulkSpeciesContract:
     retained_particle_count: int = 242
     retained_pair_labels: tuple[str, ...] = ("A-A", "A-B", "B-B")
     solvent_diagnostic_label: str = "W-W"
-    legacy_scaffold: str = (
-        "Some legacy bulk notebook cells include an inert graphene/nanopore scaffold. "
-        "Interactions involving that scaffold are zeroed in those cells, so it is not "
-        "part of the physical bulk GLE-NECK model."
-    )
     notes: str = (
         "The explicit reference system contains retained solutes A/B in explicit solvent W/C. "
         "The clean GLE/CG model propagates only A/B solute coordinates. Solvent structure such "
@@ -36,7 +31,7 @@ class BulkSpeciesContract:
 
 @dataclass(frozen=True)
 class BulkModelConfig:
-    """Notebook-derived defaults for the bulk GLE-NECK model."""
+    """Default parameters for the public bulk GLE-NECK model."""
 
     n_cg: int = 242
     n_a: int = 121
@@ -141,10 +136,8 @@ class BulkAATargetConfig:
     seed: int = 0
     notes: str = (
         "Explicit reference target generator for the final bulk interpretation: "
-        "A/B solutes in W/C solvent. The legacy inert graphene scaffold is not generated; "
-        "legacy AA transport settings use Nose-Hoover NVT with a uniform +x body force. "
-        "The solute-counter-solvent force mode is a zero-net-force diagnostic control, "
-        "not the legacy figure-generation protocol."
+        "A/B solutes in W/C solvent. The solute-counter-solvent force mode is a "
+        "zero-net-force diagnostic control."
     )
 
     @property
@@ -167,38 +160,45 @@ DEFAULT_BULK_SPECIES = BulkSpeciesContract()
 DEFAULT_BULK_AA_TARGET = BulkAATargetConfig()
 
 DEFAULT_SPT_LOW_TRAINING = BulkTrainingConfig(
-    name="bulk_spt_E0p0347",
+    name="bulk_spt_E0p5",
     mode="single-force",
-    fields=(0.0347,),
-    target_drifts=(0.11145,),
-    epochs=150,
-    notes="Single-force target from clean_bulk_system.ipynb cell 166.",
+    fields=(0.5,),
+    target_drifts=(0.260510302147,),
+    epochs=300,
+    notes="Public single-point comparison target.",
 )
 
 DEFAULT_SPT_HIGH_TRAINING = BulkTrainingConfig(
-    name="bulk_spt_E0p1027",
+    name="bulk_spt_E1",
     mode="single-force",
-    fields=(0.1027,),
-    target_drifts=(0.1729,),
-    epochs=150,
-    notes="Single-force high-field target used for Chapter Figure 5.4.",
+    fields=(1.0,),
+    target_drifts=(0.414644441332,),
+    epochs=300,
+    notes="Public middle-field single-point comparison target.",
+)
+
+DEFAULT_SPT_MAX_TRAINING = BulkTrainingConfig(
+    name="bulk_spt_E2",
+    mode="single-force",
+    fields=(2.0,),
+    target_drifts=(0.615561361077,),
+    epochs=300,
+    notes="Public high-field single-point comparison target.",
 )
 
 DEFAULT_MPT_TRAINING = BulkTrainingConfig(
-    name="bulk_mpt_asym_E0p0347_0p06883_0p1027",
+    name="bulk_mpt_E0p5_1_2",
     mode="multi-force",
-    fields=(0.0347, 0.06883, 0.1027),
-    target_drifts=(0.11145, 0.15468, 0.1729),
-    epochs=900,
-    notes=(
-        "Multi-force targets from clean_bulk_system.ipynb cell 172; epoch count "
-        "matches the artifact-backed 900-epoch kernel and mobility outputs."
-    ),
+    fields=(0.5, 1.0, 2.0),
+    target_drifts=(0.260510302147, 0.414644441332, 0.615561361077),
+    epochs=800,
+    notes="Promoted public multi-point training target.",
 )
 
 
 DEFAULT_TRAINING_CONFIGS = (
     DEFAULT_SPT_LOW_TRAINING,
     DEFAULT_SPT_HIGH_TRAINING,
+    DEFAULT_SPT_MAX_TRAINING,
     DEFAULT_MPT_TRAINING,
 )

@@ -30,6 +30,7 @@ data_private/
 # Draft/private literature and presentation assets
 refs/
 *.pdf
+!figures/bulk/*.pdf
 *.pptx
 ~$*
 

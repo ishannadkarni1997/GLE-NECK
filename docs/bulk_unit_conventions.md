@@ -23,9 +23,8 @@ This project keeps one convention for the clean bulk workflow.
 
 ## Output File Rules
 
-- CSVs may keep legacy compatibility columns such as `time_lag`, but must also
-  include explicit columns such as `time_lag_internal`, `time_lag_ps`,
-  `*_memory_internal`, and `*_memory_ps2`.
+- CSVs should include explicit physical-time columns such as `time_ps` and
+  memory columns such as `*_memory_ps2`.
 - Training NPZ files keep internal arrays for reruns and add `*_per_ps2`
   arrays for plotting.
 - Plotting scripts should prefer `*_per_ps2` arrays/columns when present.

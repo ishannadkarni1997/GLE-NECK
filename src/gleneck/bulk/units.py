@@ -10,7 +10,7 @@ FEMTOSECOND_TO_PS = 1.0e-3
 
 @dataclass(frozen=True)
 class NotebookUnitScalars:
-    """JAX-MD real-unit scalars used by the legacy notebooks."""
+    """JAX-MD real-unit scalars used by the bulk workflow."""
 
     distance: float = 1.0
     time: float = 0.0204548282835039
@@ -21,7 +21,7 @@ class NotebookUnitScalars:
 
 @lru_cache(maxsize=1)
 def notebook_unit_scalars() -> NotebookUnitScalars:
-    """Return JAX-MD real-unit scalars used by the notebooks.
+    """Return JAX-MD real-unit scalars used by the bulk workflow.
 
     JAX-MD is not installed in the lightweight Mac plotting environment, so the
     fallback must match ``units.real_unit_system()`` rather than silently
@@ -56,8 +56,8 @@ def effective_dt_internal(config: Any) -> float:
 def effective_dt_ps(config: Any) -> float:
     """Return the physical timestep in picoseconds.
 
-    The legacy notebooks specify ``config.dt`` in femtoseconds before applying
-    the JAX-MD real-unit scalar.  Keep this conversion independent of whether
+    The public configuration specifies ``config.dt`` in femtoseconds before
+    applying the JAX-MD real-unit scalar. Keep this conversion independent of whether
     JAX-MD is importable so exported tables have stable physical axes.
     """
     return float(config.dt) * FEMTOSECOND_TO_PS

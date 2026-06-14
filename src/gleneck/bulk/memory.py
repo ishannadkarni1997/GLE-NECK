@@ -30,7 +30,7 @@ def resample_memory_kernel(memory: np.ndarray, l_max: int, orig_interval: float 
 
 
 def colored_noise_filter(memory_resampled: np.ndarray, floor: float = 1e-20) -> np.ndarray:
-    """Construct the FFT-based colored-noise filter used by the legacy notebook."""
+    """Construct the FFT-based colored-noise filter for the retained GLE."""
     if floor <= 0:
         raise ValueError("floor must be positive.")
 
@@ -58,7 +58,7 @@ def estimate_memory_kernel_from_vacf(
 ) -> tuple[np.ndarray, float]:
     """Estimate a memory kernel from a normalized VACF using a Volterra solve.
 
-    The discretization follows the legacy notebook equation
+    The discretization follows the standard normalized-VACF Volterra equation
 
     dC(t) / dt = - integral_0^t M(s) C(t - s) ds
 

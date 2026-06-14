@@ -7,7 +7,7 @@ from typing import Any
 
 import numpy as np
 
-from gleneck.artifacts import _JaxArrayShimUnpickler
+from gleneck.artifacts import _JaxArrayShimUnpickler, read_numeric_table
 
 from .config import DEFAULT_BULK_MODEL, DEFAULT_BULK_SPECIES, DEFAULT_TRAINING_CONFIGS, BulkModelConfig
 from .memory import prepare_memory_terms
@@ -46,10 +46,10 @@ def default_bulk_input_paths(root: Path, private_root: Path | None = None) -> Bu
     root = root.resolve()
     private = (private_root or root / "data" / "private" / "bulk").resolve()
     return BulkInputPaths(
-        cg_potential=root / "data" / "processed" / "bulk" / "cg_potentials_NVE242.npz",
+        cg_potential=root / "data" / "processed" / "bulk" / "ibi_potentials.npz",
         trajectory=private / "traj_cg.npy",
         velocity=private / "vel_cg.npy",
-        memory_kernel=root / "data" / "processed" / "bulk" / "fitted_memory_kernal.npy",
+        memory_kernel=root / "data" / "processed" / "bulk" / "memory_kernel.csv",
     )
 
 
@@ -78,7 +78,7 @@ def validate_bulk_inputs(paths: BulkInputPaths) -> list[InputStatus]:
 
 
 def load_jax_pickle(path: Path) -> Any:
-    """Load a legacy pickle that may contain serialized JAX arrays."""
+    """Load a pickle that may contain serialized JAX arrays."""
     with path.open("rb") as handle:
         return _JaxArrayShimUnpickler(handle).load()
 
@@ -98,7 +98,7 @@ def load_cg_potential(path: Path) -> dict[tuple[int, int], np.ndarray]:
 
 
 def write_cg_potential_npz(potential: dict[tuple[int, int], np.ndarray], output: Path) -> Path:
-    """Write the legacy potential dictionary as a portable NumPy archive."""
+    """Write a potential dictionary as a portable NumPy archive."""
     output.parent.mkdir(parents=True, exist_ok=True)
     np.savez_compressed(
         output,
@@ -131,16 +131,22 @@ def summarize_bulk_inputs(paths: BulkInputPaths, model: BulkModelConfig = DEFAUL
     }
 
     if paths.memory_kernel.exists():
-        memory = np.load(paths.memory_kernel)
-        terms = prepare_memory_terms(memory, l_max=model.l_max, orig_interval=model.memory_orig_interval)
+        if paths.memory_kernel.suffix == ".csv":
+            table = read_numeric_table(paths.memory_kernel)
+            table.require("fitted_memory_ps2")
+            memory = np.asarray(table.columns["fitted_memory_ps2"], dtype=float)
+            terms = None
+        else:
+            memory = np.load(paths.memory_kernel)
+            terms = prepare_memory_terms(memory, l_max=model.l_max, orig_interval=model.memory_orig_interval)
         summary["memory_summary"] = {
             "source_shape": list(memory.shape),
-            "resampled_shape": list(terms.memory.shape),
-            "noise_filter_shape": list(terms.noise_filter.shape),
-            "memory_min": float(np.nanmin(terms.memory)),
-            "memory_max": float(np.nanmax(terms.memory)),
-            "noise_filter_min": float(np.nanmin(terms.noise_filter)),
-            "noise_filter_max": float(np.nanmax(terms.noise_filter)),
+            "resampled_shape": list(terms.memory.shape) if terms is not None else None,
+            "noise_filter_shape": list(terms.noise_filter.shape) if terms is not None else None,
+            "memory_min": float(np.nanmin(terms.memory)) if terms is not None else float(np.nanmin(memory)),
+            "memory_max": float(np.nanmax(terms.memory)) if terms is not None else float(np.nanmax(memory)),
+            "noise_filter_min": float(np.nanmin(terms.noise_filter)) if terms is not None else None,
+            "noise_filter_max": float(np.nanmax(terms.noise_filter)) if terms is not None else None,
         }
 
     if paths.cg_potential.exists():

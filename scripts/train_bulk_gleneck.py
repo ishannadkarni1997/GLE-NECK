@@ -31,15 +31,15 @@ def _parse_positive_floats(text: str) -> tuple[float, ...]:
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Train bulk GLE-NECK corrective kernels against legacy drift targets.")
+    parser = argparse.ArgumentParser(description="Train bulk GLE-NECK corrective kernels against AA drift targets.")
     parser.add_argument("--root", type=Path, default=None, help="Project root. Defaults to auto-discovery.")
     parser.add_argument("--private-root", type=Path, default=None, help="Directory containing retained traj_cg.npy and vel_cg.npy.")
     parser.add_argument("--output-dir", type=Path, default=None, help="Directory for generated training outputs.")
     parser.add_argument("--mode", choices=("mpt", "spt-low", "spt-high", "spt-custom"), default="mpt")
     parser.add_argument("--training-target", type=Path, default=None, help="Fresh mobility CSV used to select training fields/drifts.")
     parser.add_argument("--train-fields", type=str, default=None, help="Optional comma-separated training fields to pull from --training-target.")
-    parser.add_argument("--potential-path", type=Path, default=None, help="Optional CG potential NPZ. Defaults to processed legacy potential.")
-    parser.add_argument("--memory-path", type=Path, default=None, help="Optional fitted memory-kernel NPY. Defaults to processed legacy kernel.")
+    parser.add_argument("--potential-path", type=Path, default=None, help="Optional CG potential NPZ.")
+    parser.add_argument("--memory-path", type=Path, default=None, help="Optional fitted memory-kernel NPY.")
     parser.add_argument("--epochs", type=int, default=5, help="Training epochs. Defaults to a smoke-size run.")
     parser.add_argument(
         "--optimizer",

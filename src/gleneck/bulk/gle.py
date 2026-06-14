@@ -10,11 +10,21 @@ from typing import Any
 
 import numpy as np
 
+from gleneck.artifacts import read_numeric_table
+
 from .config import DEFAULT_BULK_MODEL, DEFAULT_MPT_TRAINING, BulkModelConfig, BulkTrainingConfig
 from .io import default_bulk_input_paths, load_cg_potential, load_cg_potential_npz, write_cg_potential_npz
 from .memory import prepare_memory_terms
 from .neck import initialize_kernel_params, require_jax_stack
-from .units import effective_dt, effective_dt_ps, memory_internal_to_per_ps2, effective_mass, effective_temperature, notebook_unit_scalars
+from .units import (
+    effective_dt,
+    effective_dt_ps,
+    memory_internal_to_per_ps2,
+    memory_per_ps2_to_internal,
+    effective_mass,
+    effective_temperature,
+    notebook_unit_scalars,
+)
 
 
 @dataclass(frozen=True)
@@ -164,7 +174,7 @@ def write_kernel_evolution_tables(
     config: BulkModelConfig,
     suffix: str = "",
 ) -> tuple[Path, Path]:
-    """Write legacy-inspectable corrective and total memory-kernel evolution tables."""
+    """Write corrective and total memory-kernel evolution tables."""
     output_dir.mkdir(parents=True, exist_ok=True)
     base_internal = np.asarray(base_memory, dtype=float)[: config.l_max]
     kernels_internal = np.asarray(kernel_history, dtype=float)
@@ -180,12 +190,12 @@ def write_kernel_evolution_tables(
 
     correction_header = ",".join(["lag_index", "tau_internal", "tau_ps", "original_kernel_ps2", *epoch_columns])
     correction_table = np.column_stack([lag_index, tau_internal, tau_ps, base, kernels.T])
-    correction_path = output_dir / f"corrective_kernel_evolution{suffix}_legacy.csv"
+    correction_path = output_dir / f"corrective_kernel_evolution{suffix}.csv"
     np.savetxt(correction_path, correction_table, delimiter=",", header=correction_header, comments="")
 
     total_header = ",".join(["lag_index", "tau_internal", "tau_ps", "original_kernel_ps2", *epoch_columns])
     total_table = np.column_stack([lag_index, tau_internal, tau_ps, base, (base[None, :] + kernels).T])
-    total_path = output_dir / f"total_kernel_evolution{suffix}_legacy.csv"
+    total_path = output_dir / f"total_kernel_evolution{suffix}.csv"
     np.savetxt(total_path, total_table, delimiter=",", header=total_header, comments="")
     return correction_path, total_path
 
@@ -307,12 +317,18 @@ def field_slug(field: float) -> str:
 def load_or_create_potential(root: Path, potential_path: Path | None = None) -> tuple[dict[tuple[int, int], np.ndarray], Path]:
     if potential_path is not None:
         return load_cg_potential_npz(potential_path), potential_path
-    processed = root / "data" / "processed" / "bulk" / "cg_potentials_NVE242.npz"
+    processed = root / "data" / "processed" / "bulk" / "ibi_potentials.npz"
     if processed.exists():
         return load_cg_potential_npz(processed), processed
-    legacy = root / "code" / "Bulk" / "CGpotentials_int_NVE242.pkl"
-    potential = load_cg_potential(legacy)
-    return potential, write_cg_potential_npz(potential, processed)
+    raise FileNotFoundError(f"Missing CG potential archive: {processed}")
+
+
+def load_memory_kernel_for_training(path: Path) -> np.ndarray:
+    if path.suffix == ".csv":
+        table = read_numeric_table(path)
+        table.require("fitted_memory_ps2")
+        return np.asarray(memory_per_ps2_to_internal(table.columns["fitted_memory_ps2"]), dtype=float)
+    return np.load(path)
 
 
 def generated_retained_positions(stack: Any, config: BulkModelConfig = DEFAULT_BULK_MODEL):
@@ -746,8 +762,8 @@ def run_mobility_curve(
     potential, potential_path = load_or_create_potential(root, potential_path)
     (positions, velocities, history_velocities), state_source = load_retained_state(stack, root, private_root, init_mode, seed, config)
     diagnostics = [stability_diagnostics(positions, velocities, "initial_state", config)]
-    memory_path = memory_path or (root / "data" / "processed" / "bulk" / "fitted_memory_kernal.npy")
-    terms = prepare_memory_terms(np.load(memory_path), l_max=config.l_max, orig_interval=config.memory_orig_interval)
+    memory_path = memory_path or (root / "data" / "processed" / "bulk" / "memory_kernel.csv")
+    terms = prepare_memory_terms(load_memory_kernel_for_training(memory_path), l_max=config.l_max, orig_interval=config.memory_orig_interval)
     drift_window = drift_window or config.drift_window
     positions, velocities, history_velocities = warmup_retained_state(
         stack,
@@ -894,8 +910,8 @@ def train_gleneck_legacy_targets(
     potential, potential_path = load_or_create_potential(root, potential_path)
     (positions, velocities, history_velocities), state_source = load_retained_state(stack, root, private_root, init_mode, seed, config)
     diagnostics = [stability_diagnostics(positions, velocities, "initial_state", config)]
-    memory_path = memory_path or (root / "data" / "processed" / "bulk" / "fitted_memory_kernal.npy")
-    terms = prepare_memory_terms(np.load(memory_path), l_max=config.l_max, orig_interval=config.memory_orig_interval)
+    memory_path = memory_path or (root / "data" / "processed" / "bulk" / "memory_kernel.csv")
+    terms = prepare_memory_terms(load_memory_kernel_for_training(memory_path), l_max=config.l_max, orig_interval=config.memory_orig_interval)
     positions, velocities, history_velocities = warmup_retained_state(
         stack,
         positions,

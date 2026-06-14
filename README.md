@@ -4,80 +4,66 @@
 
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Status](https://img.shields.io/badge/status-research%20prototype-orange)](#project-status)
+[![Status](https://img.shields.io/badge/status-research%20code-orange)](#status)
 
 <p align="center">
-  <img src="docs/assets/gleneck-banner.png" alt="GLE-NECK project graphic" width="420">
+  <img src="docs/assets/gleneck-banner.png" alt="GLE-NECK project graphic" width="380">
 </p>
 
-GLE-NECK is a differentiable coarse-grained transport framework for learning non-equilibrium corrections to an equilibrium generalized Langevin equation (GLE). The central use case is a system where an equilibrium coarse-grained GLE reproduces static structure and equilibrium time correlations, but does not reproduce the all-atom drift response under external driving.
+GLE-NECK is a differentiable coarse-grained transport workflow for learning field-dependent corrections to an equilibrium generalized Langevin equation (GLE). This public repository focuses on the **bulk binary-solute system**: explicit-solvent reference simulations define equilibrium structure, equilibrium dynamics, and driven mobility targets; a retained-solute GLE reproduces equilibrium RDF/VACF behavior; GLE-NECK then learns a non-equilibrium corrective memory kernel from drift-velocity targets.
 
-This repository contains a cleaned, publication-oriented implementation for the bulk transport workflow, compact processed artifacts, and scripts for reproducing the current thesis/manuscript figures. Raw trajectories, exploratory notebooks, draft PDFs, private cluster paths, and large diagnostic runs are intentionally excluded.
+The repository is designed for reproducibility from compact processed artifacts. Raw trajectories, exploratory notebooks, large run directories, and private cluster output are intentionally excluded.
 
-## Scientific Idea
+## Model
 
-The model starts from an equilibrium retained-solute GLE:
-
-- retained-solute conservative interactions from RDF inversion;
-- an equilibrium memory/friction kernel reconstructed from the all-atom VACF;
-- colored noise consistent with the equilibrium GLE;
-- no explicit solvent particles in the propagated coarse-grained state.
-
-GLE-NECK then augments the equilibrium memory with a field-dependent corrective kernel:
+The retained coarse-grained model propagates only solute species `A` and `B`; the solvent is eliminated and represented through conservative interactions, memory friction, colored noise, and a learned correction:
 
 ```text
-M_total(E, tau) = M_eq(tau) + Delta M(E, tau)
+F_GLE-NECK = F_PMF - int_0^t [M_eq(t - tau) + Delta M(E, t - tau)] v(tau) d tau
+             + eta(t) + F_ext
+
 Delta M(E, tau) = E^2 N_theta(E, tau)
 ```
 
-The `E^2` prefactor enforces smooth recovery of the equilibrium GLE as `E -> 0`, while `N_theta` is learned by differentiating through driven GLE rollouts and matching all-atom non-equilibrium molecular dynamics (NEMD) drift targets.
+The `E^2` gate enforces smooth recovery of the equilibrium GLE as the external field approaches zero.
 
-## Current Result Snapshot
+## Main Results
 
-The current promoted bulk candidate is `neural_tau0p015_midlong`. It is trained on three fields, `E = 0.5, 1.0, 2.0`, with `l_max = 500`, and is intended as the working manuscript candidate rather than a final universal architecture choice.
+Generate the complete bulk figure set with:
 
-<p align="center">
-  <img src="results/canonical/neural_tau0p015_midlong/bulk_lmax500_mobility_compare.png" alt="Bulk GLE-NECK mobility comparison" width="720">
-</p>
-
-<p align="center">
-  <img src="results/canonical/neural_tau0p015_midlong/bulk_lmax500_neural_tau0p015_midlong_kernel_evolution.png" alt="Corrective-kernel evolution for the promoted GLE-NECK candidate" width="720">
-</p>
-
-The promoted neural correction captures the non-equilibrium mobility response well over the selected training regime. Its learned corrective kernel decays faster than the audited equilibrium memory kernel; this is recorded as an empirical modeling result that should be interpreted carefully in the manuscript. See [`RESULTS_PROVENANCE.md`](RESULTS_PROVENANCE.md) for the current evidence trail and caveats.
-
-## What This Repository Reproduces
-
-| Stage | Output |
-| --- | --- |
-| Equilibrium AA target processing | retained-solute RDFs and VACF |
-| AA NEMD sweep | mobility target curve |
-| IBI/PMF construction | tabulated `A-A`, `A-B`, and `B-B` CG interactions |
-| Volterra reconstruction | equilibrium memory kernel |
-| Baseline GLE validation | RDF/VACF comparison against AA targets |
-| GLE-NECK training | SPT/MPT loss, mobility, and corrective-kernel evolution |
-| Figure reproduction | thesis Chapter 5 and manuscript-style result figures |
-
-The artifact-backed figure set can be regenerated without rerunning the expensive AA or GLE training jobs.
-
-## Repository Layout
-
-```text
-src/gleneck/                 reusable package code
-scripts/                     command-line workflows and plotting scripts
-configs/                     locked publication-oriented run configuration
-data/processed/              compact processed artifacts for tests and figures
-figures/chapter5/            regenerated thesis/chapter figure outputs
-results/canonical/           promoted GLE-NECK result snapshot
-results/diagnostics/         unit and memory-kernel audit diagnostics
-docs/                        workflow notes, unit conventions, provenance
-slurm/                       generic GPU-cluster job template
-tests/                       smoke and unit tests
+```bash
+python scripts/make_bulk_figures.py --all
 ```
+
+The generated figures are written to `figures/bulk/` as both PNG and PDF:
+
+| Figure | Purpose |
+| --- | --- |
+| `01_aa_equilibrium_targets` | AA RDF targets, including solvent-solvent diagnostic RDF, and IBI/PMF solute potentials |
+| `02_gle_baseline_benchmark` | Baseline GLE RDF, memory kernel, and VACF validation |
+| `03_baseline_mobility` | AA mobility target versus equilibrium GLE response |
+| `04_spt_vs_mpt_loss` | Single-point and multi-point corrective-kernel training losses |
+| `05_spt_vs_mpt_mobility` | AA, baseline GLE, SPT, and MPT mobility curves |
+| `06_mpt_kernel_evolution_logtau` | MPT corrective-kernel evolution on a logarithmic lag-time axis |
+| `07_field_conditioned_kernel` | Final corrective kernel as a function of field strength |
+
+After generation, the key panels appear here:
+
+<p align="center">
+  <img src="figures/bulk/02_gle_baseline_benchmark.png" alt="Bulk GLE baseline benchmark" width="850">
+</p>
+
+<p align="center">
+  <img src="figures/bulk/05_spt_vs_mpt_mobility.png" alt="Bulk GLE-NECK mobility comparison" width="650">
+</p>
+
+<p align="center">
+  <img src="figures/bulk/06_mpt_kernel_evolution_logtau.png" alt="Bulk MPT corrective-kernel evolution" width="850">
+</p>
 
 ## Installation
 
-For figure reproduction and tests:
+For artifact-backed figure reproduction and tests:
 
 ```bash
 git clone https://github.com/ishannadkarni1997/GLE-NECK.git
@@ -88,73 +74,61 @@ python -m pip install --upgrade pip
 python -m pip install -e '.[dev]'
 ```
 
-For differentiable simulations and training, install JAX/JAX-MD in an environment appropriate for the target CPU/GPU platform:
+For full differentiable simulations and training, install the optional JAX stack in an environment appropriate for your CPU/GPU platform:
 
 ```bash
 python -m pip install -e '.[dev,jax]'
 ```
 
-Cluster environment notes are in [`environment_cluster.md`](environment_cluster.md) and [`environment_jax_cluster.yml`](environment_jax_cluster.yml).
+## Reproducibility
 
-## Quick Reproduction
-
-Regenerate all artifact-backed figures:
+Regenerate figures:
 
 ```bash
-python scripts/reproduce_figures.py --all --root . --output-dir figures/chapter5
+python scripts/make_bulk_figures.py --all
 ```
 
-Run the test suite:
+Run artifact and repository checks:
+
+```bash
+python scripts/check_bulk_reproducibility.py
+```
+
+Run tests:
 
 ```bash
 pytest
 ```
 
-Expected validation for the current public release:
+The same entry points are also available after installation:
 
-```text
-39 passed
+```bash
+gleneck-bulk-figures --all
+gleneck-bulk-check
 ```
 
-## End-to-End Scientific Workflow
+## Repository Layout
 
-1. Run an explicit-solvent all-atom equilibrium simulation.
-2. Compute equilibrium retained-solute RDFs and VACF.
-3. Run driven all-atom NEMD simulations and compute the mobility curve.
-4. Invert retained-solute RDFs to obtain CG conservative interactions.
-5. Reconstruct the equilibrium memory kernel from the VACF with a Volterra solve.
-6. Validate the baseline GLE against AA RDF and VACF targets.
-7. Train the corrective kernel using differentiable driven GLE rollouts.
-8. Compare SPT and MPT training through loss curves, mobility response, and kernel evolution.
-
-See [`WORKFLOW.md`](WORKFLOW.md) for the method-level workflow and [`docs/bulk_unit_conventions.md`](docs/bulk_unit_conventions.md) for time and memory-unit conventions.
-
-## Reproducibility And Units
-
-- User-facing lag times are reported in physical picoseconds.
-- User-facing memory kernels are reported in `ps^-2`.
-- JAX-MD internal time units are kept inside simulation code.
-- The public CG potential contract uses `data/processed/bulk/cg_potentials_NVE242.npz`.
-- The equilibrium memory-axis audit is stored in [`results/diagnostics/equilibrium_memory_audit/`](results/diagnostics/equilibrium_memory_audit/).
-
-These checks were added because early exploratory runs mixed internal and physical time conventions. The current public artifacts are intended to be plotted and interpreted on the physical `ps` axis.
+```text
+src/gleneck/                 reusable Python package
+scripts/                     public command-line workflows
+configs/                     locked bulk run configuration
+data/processed/bulk/         compact processed artifacts
+figures/bulk/                generated public figures
+docs/                        method, units, provenance, and cluster notes
+examples/                    minimal reproduction workflow
+slurm/                       generic GPU job template
+tests/                       artifact, plotting, and hygiene tests
+```
 
 ## Data Policy
 
-Committed data are limited to compact processed artifacts needed for reproducibility checks and figure generation. The repository excludes:
+Committed data are limited to compact processed artifacts required to reproduce the public figures and smoke tests. The repository does not include raw trajectories, position/velocity histories, scheduler logs, failed training branches, or draft manuscript materials. Those files should be archived separately for formal publication if needed.
 
-- raw all-atom and GLE trajectories;
-- large position/velocity histories;
-- private cluster workspaces and SLURM logs;
-- exploratory notebooks and failed run directories;
-- thesis/manuscript drafts and reference-library PDFs.
+## Status
 
-If raw-data archival is needed for publication, those files should be deposited separately in Zenodo, OSF, Figshare, or an institutional repository and linked from this README.
-
-## Project Status
-
-This is research code for thesis and manuscript preparation. The bulk workflow is the primary maintained path. Confinement artifacts are included for Chapter 5 figure reproduction, but the cleaned end-to-end rerun path is currently focused on the bulk system.
+The bulk workflow is the maintained public path. The promoted GLE-NECK result uses a neural/asymptotic corrective kernel trained at `E = 0.5, 1.0, 2.0` with `l_max = 500`. The learned correction reproduces the selected mobility regime well but decays faster than the audited equilibrium memory kernel; this is documented as a current modeling caveat rather than hidden in the implementation.
 
 ## Citation
 
-If you use this repository, please cite the associated thesis or manuscript when available. A placeholder citation file is provided in [`CITATION.cff`](CITATION.cff).
+If this code is useful, please cite the associated thesis or manuscript when available. A placeholder citation file is provided in [`CITATION.cff`](CITATION.cff).

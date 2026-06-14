@@ -32,6 +32,10 @@ jax = [
 [tool.setuptools.packages.find]
 where = ["src"]
 
+[project.scripts]
+gleneck-bulk-figures = "gleneck.bulk.figures:main"
+gleneck-bulk-check = "gleneck.bulk.checks:main"
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["src"]

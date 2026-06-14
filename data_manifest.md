@@ -1,38 +1,29 @@
 # Data Manifest
 
-This project separates compact processed artifacts from raw/private simulation data.
+This repository commits only compact processed artifacts for the bulk transport workflow. They are sufficient to regenerate public figures and run smoke tests; they are not a substitute for archived raw trajectories.
 
-## Included or Intended for GitHub
+## Bulk Processed Artifacts
 
-`data/processed/bulk/`
+All files live in `data/processed/bulk/`.
 
-- RDF and VACF validation CSVs.
-  - `A-A`, `A-B`, and `B-B` RDFs are retained-solute observables used for the CG/GLE conservative model.
-  - `W-W` RDFs are explicit-solvent diagnostics and are not propagated in the retained GLE state.
-- Equilibrium memory-kernel NPY files.
-- Bulk mobility, training-loss, drift, kernel-evolution, corrective-kernel, and friction-distribution CSVs.
-- `asym_MPT_kernel_evolution_900epochs.npz`, a portable NumPy snapshot bundle derived from the two legacy multi-force JAX-array pickle files.
-- `cg_potentials_NVE242.npz`, a portable two-species tabulated CG potential derived from the legacy JAX-array pickle. This is for future bulk scientific reruns, not Chapter 5 figure plotting.
-- `bulk_reproducibility_audit.json`, a machine-readable audit of bulk rerun inputs and extracted training defaults.
+| File | Contents |
+| --- | --- |
+| `aa_equilibrium_rdf.csv` | Equilibrium AA RDF targets for `A-A`, `B-B`, `A-B`, and solvent diagnostic `W-W` |
+| `aa_vacf.csv` | Equilibrium retained-solute AA VACF target on a physical ps axis |
+| `aa_mobility.csv` | Driven AA mobility target, reported as relative solute drift versus field |
+| `ibi_potentials.csv` | IBI/PMF solute potentials for `A-A`, `A-B`, and `B-B` |
+| `ibi_potentials.npz` | Portable NumPy copy of the same solute potential tables |
+| `memory_kernel.csv` | Volterra memory reconstruction with raw and fitted kernels in `ps^-2` |
+| `gle_baseline_rdf.csv` | RDFs from the retained-solute baseline GLE |
+| `gle_baseline_vacf.csv` | VACF from the retained-solute baseline GLE |
+| `gle_baseline_mobility.csv` | Mobility response of the equilibrium baseline GLE |
+| `gleneck_mpt_mobility.csv` | Promoted multi-point GLE-NECK mobility response |
+| `gleneck_mpt_training_loss.csv` | Promoted multi-point training loss |
+| `gleneck_kernel_evolution.npz` | Downsampled corrective-kernel history for public figures |
+| `gleneck_spt_mobility.csv` | Optional single-point mobility curves used in SPT/MPT comparison |
+| `gleneck_spt_training_loss.csv` | Optional single-point training losses used in SPT/MPT comparison |
+| `bulk_result_summary.json` | Machine-readable summary of the promoted bulk result |
 
-`data/processed/confinement/`
+## Excluded Data
 
-- Confined RDF, density, wall/fluid potential, VACF, velocity-profile, training-loss, and learned-kernel CSV/NPY artifacts.
-
-## Excluded from GitHub
-
-- Raw trajectories and velocities.
-- Private bulk rerun arrays such as `data/private/bulk/traj_cg.npy` and `data/private/bulk/vel_cg.npy`, which contain retained-solute positions and velocities.
-- Fresh explicit-solvent target-generation outputs under `data_private/bulk/aa_targets/` on the cluster.
-- Large all-atom simulation dumps.
-- Private cluster paths and user-specific scratch directories.
-- SLURM logs and generated figures.
-
-## Legacy Provenance
-
-The current source artifacts live in:
-
-- `code/Bulk/`
-- `code/Confinement/`
-
-The notebooks in those folders are exploratory and are preserved unchanged during the first reproducibility milestone.
+The public repository excludes raw AA trajectories, retained-solute position/velocity histories, large training checkpoints, scheduler logs, exploratory notebooks, and draft manuscript files. Those data should be archived separately for publication if they are needed for full reruns.

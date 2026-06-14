@@ -33,6 +33,8 @@ This document records the public provenance for the promoted bulk result.
 
 The corrective kernel gives a strong mobility match over the selected training regime. It also decays faster than the equilibrium memory kernel. This is retained as a current modeling caveat and should be discussed explicitly in any paper or thesis text that uses the result.
 
+The field-conditioned-kernel figure shows the exact trained kernels at `E = 0.5, 1.0, 2.0`, the zero-field limit imposed by the `E^2` gate, and linear field interpolation at intermediate 0.25-spaced visualization points. The intermediate curves are for presentation of the learned field dependence, not additional training simulations.
+
 The SPT curves are included as comparison baselines. The `E = 2.0` SPT run completed and matched its training point, but its diagnostics include a minimum-pair-distance warning; the promoted result is therefore the MPT candidate, not the high-field SPT branch.
 
 ## Non-Public Material

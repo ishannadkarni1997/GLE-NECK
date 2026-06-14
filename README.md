@@ -43,9 +43,9 @@ The generated figures are written to `figures/bulk/` as both PNG and PDF:
 | `02_gle_baseline_benchmark` | Baseline GLE RDF, memory kernel, and VACF validation |
 | `03_baseline_mobility` | AA mobility target versus equilibrium GLE response |
 | `04_spt_vs_mpt_loss` | Single-point and multi-point corrective-kernel training losses |
-| `05_spt_vs_mpt_mobility` | AA, baseline GLE, SPT, and MPT mobility curves |
+| `05_spt_vs_mpt_mobility` | AA, baseline GLE, SPT, and MPT mobility curves over the promoted `E <= 2` regime |
 | `06_mpt_kernel_evolution_logtau` | MPT corrective-kernel evolution on a logarithmic lag-time axis |
-| `07_field_conditioned_kernel` | Final corrective kernel as a function of field strength |
+| `07_field_conditioned_kernel` | Final corrective kernel versus field, shown every 0.25 field units through `E = 2` |
 
 After generation, the key panels appear here:
 

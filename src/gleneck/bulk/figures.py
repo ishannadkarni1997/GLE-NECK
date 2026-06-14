@@ -89,17 +89,35 @@ def _load_optional_table(path: Path):
     return read_numeric_table(path) if path.exists() else None
 
 
-def _plot_mobility_curve(ax, table, *, label: str, color: str, linestyle: str = "-", marker: str = "o") -> None:
+def _plot_mobility_curve(
+    ax,
+    table,
+    *,
+    label: str,
+    color: str,
+    linestyle: str = "-",
+    marker: str = "o",
+    max_field: float | None = None,
+) -> None:
     fields = _array(table, "field")
     drifts = _array(table, "drift_velocity")
+    if max_field is not None:
+        mask = fields <= max_field + 1.0e-12
+        fields = fields[mask]
+        drifts = drifts[mask]
     order = np.argsort(fields)
     ax.plot(fields[order], drifts[order], marker=marker, linestyle=linestyle, color=color, label=label)
 
 
-def _plot_spt_mobility(ax, table) -> None:
+def _plot_spt_mobility(ax, table, *, max_field: float | None = None) -> None:
     fields = _array(table, "field")
     drifts = _array(table, "drift_velocity")
     training = _array(table, "training_field")
+    if max_field is not None:
+        mask = fields <= max_field + 1.0e-12
+        fields = fields[mask]
+        drifts = drifts[mask]
+        training = training[mask]
     for train_field in sorted(np.unique(training)):
         mask = np.isclose(training, train_field)
         order = np.argsort(fields[mask])
@@ -112,6 +130,17 @@ def _plot_spt_mobility(ax, table) -> None:
             color=MODEL_COLORS.get(key, None),
             label=fr"SPT $E={train_field:g}$",
         )
+
+
+def _interpolate_kernels_by_field(fields: np.ndarray, kernels: np.ndarray, target_fields: np.ndarray) -> np.ndarray:
+    """Linear field interpolation with the exact zero-field asymptotic kernel."""
+    order = np.argsort(fields)
+    source_fields = np.concatenate(([0.0], fields[order]))
+    source_kernels = np.vstack([np.zeros_like(kernels[0]), kernels[order]])
+    interpolated = []
+    for target in target_fields:
+        interpolated.append(np.array([np.interp(target, source_fields, source_kernels[:, lag]) for lag in range(source_kernels.shape[1])]))
+    return np.asarray(interpolated)
 
 
 def plot_aa_equilibrium_targets(data_dir: Path, output_dir: Path) -> list[Path]:
@@ -182,10 +211,11 @@ def plot_gle_baseline_benchmark(data_dir: Path, output_dir: Path) -> list[Path]:
 
     ax = axes[1]
     tau = _array(memory, "time_ps")
-    keep = tau <= 0.6
+    keep = tau <= 1.2
     ax.plot(tau[keep], _array(memory, "raw_memory_ps2")[keep], color="0.65", label="Raw estimate")
     ax.plot(tau[keep], _array(memory, "fitted_memory_ps2")[keep], color=MODEL_COLORS["baseline"], label="Fitted kernel")
     ax.axhline(0.0, color="0.65", linestyle=":", linewidth=1.4)
+    ax.set_xlim(0.0, 1.2)
     ax.set_xlabel(r"$\tau$ (ps)")
     ax.set_ylabel(r"$M(\tau)$ (ps$^{-2}$)")
     ax.set_title("Memory kernel")
@@ -193,15 +223,19 @@ def plot_gle_baseline_benchmark(data_dir: Path, output_dir: Path) -> list[Path]:
     _style(ax)
 
     ax = axes[2]
-    ax.plot(_array(aa_vacf, "time_ps"), _array(aa_vacf, "vacf"), color=MODEL_COLORS["aa"], label="All-atom")
+    aa_tau = _array(aa_vacf, "time_ps")
+    gle_tau = _array(gle_vacf, "time_ps")
+    aa_keep = aa_tau <= 2.0
+    gle_keep = gle_tau <= 2.0
+    ax.plot(aa_tau[aa_keep], _array(aa_vacf, "vacf")[aa_keep], color=MODEL_COLORS["aa"], label="All-atom")
     ax.plot(
-        _array(gle_vacf, "time_ps"),
-        _array(gle_vacf, "vacf"),
+        gle_tau[gle_keep],
+        _array(gle_vacf, "vacf")[gle_keep],
         color=PAIR_COLORS["AB"],
         linestyle="-.",
         label="GLE",
     )
-    ax.set_xlim(0.0, 210.0)
+    ax.set_xlim(0.0, 2.0)
     ax.set_xlabel(r"$\tau$ (ps)")
     ax.set_ylabel(r"Normalized VACF, $C(\tau)$")
     ax.set_title("Bulk VACF")
@@ -273,14 +307,32 @@ def plot_spt_vs_mpt_mobility(data_dir: Path, output_dir: Path) -> list[Path]:
     spt = _load_optional_table(data_dir / "gleneck_spt_mobility.csv")
 
     fig, ax = plt.subplots(figsize=(8.0, 5.4))
-    _plot_mobility_curve(ax, aa, label="AA target", color=MODEL_COLORS["aa"], marker="o")
-    _plot_mobility_curve(ax, baseline, label="baseline GLE", color=MODEL_COLORS["baseline"], linestyle="--", marker="s")
+    max_field = 2.0
+    _plot_mobility_curve(ax, aa, label="AA target", color=MODEL_COLORS["aa"], marker="o", max_field=max_field)
+    _plot_mobility_curve(
+        ax,
+        baseline,
+        label="baseline GLE",
+        color=MODEL_COLORS["baseline"],
+        linestyle="--",
+        marker="s",
+        max_field=max_field,
+    )
     if spt is not None:
-        _plot_spt_mobility(ax, spt)
-    _plot_mobility_curve(ax, mpt, label=r"MPT $E=0.5,1.0,2.0$", color=MODEL_COLORS["mpt"], linestyle="-", marker="D")
+        _plot_spt_mobility(ax, spt, max_field=max_field)
+    _plot_mobility_curve(
+        ax,
+        mpt,
+        label=r"MPT $E=0.5,1.0,2.0$",
+        color=MODEL_COLORS["mpt"],
+        linestyle="-",
+        marker="D",
+        max_field=max_field,
+    )
+    ax.set_xlim(-0.03, 2.05)
     ax.set_xlabel("External field")
     ax.set_ylabel("Drift velocity")
-    ax.set_title("GLE-NECK Mobility Response")
+    ax.set_title(r"GLE-NECK Mobility Response ($E \leq 2$)")
     ax.legend(frameon=False, fontsize=9)
     _style(ax)
     fig.tight_layout()
@@ -307,9 +359,9 @@ def plot_mpt_kernel_evolution_logtau(data_dir: Path, output_dir: Path) -> list[P
         axes = [axes]
     for index, (ax, field) in enumerate(zip(axes, fields)):
         for epoch_index, epoch in enumerate(epochs):
-            ax.plot(tau[keep], kernels[epoch_index, index, keep], color=cmap(norm(epoch)), alpha=0.75, linewidth=1.2)
-        ax.plot(tau[keep], eq[keep], color="black", linewidth=2.7, label=r"$M_{eq}$")
-        ax.plot(tau[keep], final[index, keep], color="#F0E442", linewidth=3.0, label=r"final $\Delta M$")
+            ax.plot(tau[keep], kernels[epoch_index, index, keep], color=cmap(norm(epoch)), alpha=0.58, linewidth=0.95, zorder=1)
+        final_line = ax.plot(tau[keep], final[index, keep], color="#F0E442", linewidth=3.0, zorder=3)[0]
+        eq_line = ax.plot(tau[keep], eq[keep], color="black", linewidth=3.0, zorder=5)[0]
         ax.axhline(0.0, color="0.65", linestyle=":", linewidth=1.2)
         ax.set_xscale("log")
         ax.set_title(fr"$E={field:g}$")
@@ -317,7 +369,7 @@ def plot_mpt_kernel_evolution_logtau(data_dir: Path, output_dir: Path) -> list[P
         if index == 0:
             ax.set_ylabel(r"$\Delta M(\tau)$ (ps$^{-2}$)")
         if index == len(fields) - 1:
-            ax.legend(frameon=False)
+            ax.legend([eq_line, final_line], [r"$M_{eq}$", r"final $\Delta M$"], frameon=False)
         _style(ax)
     sm = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
     sm.set_array([])
@@ -335,15 +387,18 @@ def plot_field_conditioned_kernel(data_dir: Path, output_dir: Path) -> list[Path
     tau = np.asarray(data["tau_ps"], dtype=float)
     final = np.asarray(data["best_kernels_by_field_ps2"], dtype=float)
     keep = (tau >= 1.0e-3) & (tau <= 0.3)
+    target_fields = np.arange(0.0, 2.0 + 1.0e-12, 0.25)
+    field_kernels = _interpolate_kernels_by_field(fields, final, target_fields)
 
     cmap = plt.get_cmap("viridis")
-    norm = plt.Normalize(vmin=0.0, vmax=float(np.nanmax(fields)))
+    norm = plt.Normalize(vmin=0.0, vmax=2.0)
     fig, ax = plt.subplots(figsize=(7.2, 5.0))
-    ax.plot(tau[keep], np.zeros_like(tau[keep]), color=cmap(norm(0.0)), linewidth=2.4)
-    for field, kernel in zip(fields, final):
-        ax.plot(tau[keep], kernel[keep], color=cmap(norm(field)), linewidth=2.4)
+    for field, kernel in zip(target_fields, field_kernels):
+        linewidth = 2.8 if np.any(np.isclose(field, [0.0, 0.5, 1.0, 2.0])) else 2.0
+        ax.plot(tau[keep], kernel[keep], color=cmap(norm(field)), linewidth=linewidth)
     ax.axhline(0.0, color="0.65", linestyle=":", linewidth=1.3)
     ax.set_xscale("log")
+    ax.set_xlim(1.0e-3, 0.3)
     ax.set_xlabel(r"$\tau$ (ps)")
     ax.set_ylabel(r"$\Delta M(\tau)$ (ps$^{-2}$)")
     ax.set_title("Field-Conditioned Corrective Kernel")

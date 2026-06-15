@@ -156,6 +156,48 @@ In the promoted bulk result,
 
 Single-point training is retained as a diagnostic baseline. Multi-point training is the promoted model because it learns a shared field-conditioned correction across the transport curve.
 
+\begin{algorithm}[H]
+\small
+\caption[Transport-targeted training of GLE-NECK]{Transport-targeted training of the GLE-NECK corrective kernel.}
+\label{alg:ch5_gleneck_training}
+\begin{algorithmic}[1]
+\Require Training forces $\mathcal{F}_{\mathrm{train}}$, atomistic transport targets $\mathcal{T}^{\mathrm{AA}}(F)$, equilibrium model $(F_{\mathrm{C}},\Gamma_{\mathrm{eq}},\eta_{\mathrm{eq}})$, initial neural parameters $\phi$
+\Ensure Trained corrective-kernel parameters $\phi^{*}$
+
+\For{$n=1,\ldots,N_{\mathrm{opt}}$}
+    \State Initialize total loss $\mathcal{L}\leftarrow 0$
+    \For{$F_i \in \mathcal{F}_{\mathrm{train}}$}
+        \State Construct gated corrective kernel $\Gamma_{\mathrm{corr},\phi}(t;F_i)$
+        \State Form total memory kernel $\Gamma_{\mathrm{tot}}(t;F_i)
+        \leftarrow \Gamma_{\mathrm{eq}}(t)+\Gamma_{\mathrm{corr},\phi}(t;F_i)$
+        \State Simulate trajectory
+        $\mathbf{X}_{0:T}^{\mathrm{CG}}(\phi,F_i)
+        \leftarrow
+        \mathcal{S}_{\Delta t}
+        (\mathbf{X}_0,F_{\mathrm{C}},\Gamma_{\mathrm{tot}},\eta_{\mathrm{eq}},F_i)$
+        \State Estimate transport observable
+        $\mathcal{T}^{\mathrm{CG}}(F_i;\phi)
+        \leftarrow
+        \mathcal{O}(\mathbf{X}_{0:T}^{\mathrm{CG}})$
+        \State Accumulate loss
+        $\mathcal{L}\leftarrow
+        \mathcal{L}
+        +
+        w_i
+        \left\|
+        \mathcal{T}^{\mathrm{CG}}(F_i;\phi)
+        -
+        \mathcal{T}^{\mathrm{AA}}(F_i)
+        \right\|^2$
+    \EndFor
+    \State Compute $\nabla_{\phi}\mathcal{L}$ by differentiating through the GLE integrator
+    \State Update parameters $\phi\leftarrow\mathrm{Optimizer}(\phi,\nabla_{\phi}\mathcal{L})$
+\EndFor
+
+\State \Return $\phi^{*}\leftarrow\phi$
+\end{algorithmic}
+\end{algorithm}
+
 ---
 
 ## Results

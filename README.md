@@ -156,47 +156,52 @@ In the promoted bulk result,
 
 Single-point training is retained as a diagnostic baseline. Multi-point training is the promoted model because it learns a shared field-conditioned correction across the transport curve.
 
-\begin{algorithm}[H]
-\small
-\caption[Transport-targeted training of GLE-NECK]{Transport-targeted training of the GLE-NECK corrective kernel.}
-\label{alg:ch5_gleneck_training}
-\begin{algorithmic}[1]
-\Require Training forces $\mathcal{F}_{\mathrm{train}}$, atomistic transport targets $\mathcal{T}^{\mathrm{AA}}(F)$, equilibrium model $(F_{\mathrm{C}},\Gamma_{\mathrm{eq}},\eta_{\mathrm{eq}})$, initial neural parameters $\phi$
-\Ensure Trained corrective-kernel parameters $\phi^{*}$
+### Training algorithm
 
-\For{$n=1,\ldots,N_{\mathrm{opt}}$}
-    \State Initialize total loss $\mathcal{L}\leftarrow 0$
-    \For{$F_i \in \mathcal{F}_{\mathrm{train}}$}
-        \State Construct gated corrective kernel $\Gamma_{\mathrm{corr},\phi}(t;F_i)$
-        \State Form total memory kernel $\Gamma_{\mathrm{tot}}(t;F_i)
-        \leftarrow \Gamma_{\mathrm{eq}}(t)+\Gamma_{\mathrm{corr},\phi}(t;F_i)$
-        \State Simulate trajectory
-        $\mathbf{X}_{0:T}^{\mathrm{CG}}(\phi,F_i)
-        \leftarrow
-        \mathcal{S}_{\Delta t}
-        (\mathbf{X}_0,F_{\mathrm{C}},\Gamma_{\mathrm{tot}},\eta_{\mathrm{eq}},F_i)$
-        \State Estimate transport observable
-        $\mathcal{T}^{\mathrm{CG}}(F_i;\phi)
-        \leftarrow
-        \mathcal{O}(\mathbf{X}_{0:T}^{\mathrm{CG}})$
-        \State Accumulate loss
-        $\mathcal{L}\leftarrow
-        \mathcal{L}
-        +
-        w_i
-        \left\|
-        \mathcal{T}^{\mathrm{CG}}(F_i;\phi)
-        -
-        \mathcal{T}^{\mathrm{AA}}(F_i)
-        \right\|^2$
-    \EndFor
-    \State Compute $\nabla_{\phi}\mathcal{L}$ by differentiating through the GLE integrator
-    \State Update parameters $\phi\leftarrow\mathrm{Optimizer}(\phi,\nabla_{\phi}\mathcal{L})$
-\EndFor
+```text
+Algorithm: Transport-targeted training of the GLE-NECK corrective kernel
 
-\State \Return $\phi^{*}\leftarrow\phi$
-\end{algorithmic}
-\end{algorithm}
+Inputs:
+  F_train          training fields
+  T_AA(F)          all-atom transport targets
+  F_C              conservative PMF/IBI force
+  Gamma_eq         equilibrium memory kernel
+  eta_eq           equilibrium colored noise
+  phi              initial neural-kernel parameters
+
+Output:
+  phi*             trained corrective-kernel parameters
+
+for n = 1, ..., N_opt:
+    L = 0
+
+    for each F_i in F_train:
+        # Construct gated corrective kernel
+        Gamma_corr_phi(t; F_i) =
+            g(F_i) * NN_phi(e_t(t), e_F(F_i))
+
+        # Form total kernel
+        Gamma_tot(t; F_i) =
+            Gamma_eq(t) + Gamma_corr_phi(t; F_i)
+
+        # Simulate CG-GLE trajectory
+        X_CG[0:T](phi, F_i) =
+            S_dt(X_0, F_C, Gamma_tot, eta_eq, F_i)
+
+        # Estimate transport observable
+        T_CG(F_i; phi) =
+            O(X_CG[0:T](phi, F_i))
+
+        # Accumulate transport loss
+        L += w_i * ||T_CG(F_i; phi) - T_AA(F_i)||^2
+
+    # Differentiate through GLE integrator and update kernel
+    grad_phi = dL/dphi
+    phi = Optimizer(phi, grad_phi)
+
+return phi* = phi
+```
+The algorithm is written for the bulk force-conditioned kernel. For confined transport, the same workflow is used with `Gamma_corr_phi(t; F_i, z)` and with `T_CG` defined as the spatially resolved velocity profile.
 
 ---
 

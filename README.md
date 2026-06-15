@@ -1,49 +1,67 @@
 # GLE-NECK
 
-**Generalized Langevin Equation with Non-Equilibrium Corrective Kernel**
+**Generalized Langevin Equation with Non-Equilibrium Corrective Kernels**
 
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Status](https://img.shields.io/badge/status-research%20code-orange)](#status)
 
 <p align="center">
-  <img src="docs/assets/gleneck-banner.png" alt="GLE-NECK project graphic" width="380">
+  <img src="docs/assets/gleneck-banner.png" alt="GLE-NECK project graphic" width="650">
 </p>
 
-GLE-NECK is a differentiable coarse-grained transport workflow for learning non-equilibrium corrections to an equilibrium generalized Langevin equation (GLE). This public repository contains the **bulk binary-solute system**: explicit-solvent reference simulations define equilibrium structure, equilibrium dynamics, and driven mobility targets; a retained-solute GLE reproduces equilibrium RDF/VACF behavior; GLE-NECK then learns a field-conditioned corrective memory kernel from steady-state transport data.
+## Overview
 
-The public repository is intentionally compact. It includes processed bulk artifacts, figure-generation code, tests, and minimal run scripts. Raw trajectories, exploratory notebooks, failed architecture sweeps, scheduler logs, and draft thesis material are excluded.
+GLE-NECK is a differentiable coarse-grained transport workflow for learning **non-equilibrium corrections to an equilibrium generalized Langevin equation (GLE)**.
 
-## Model
+Equilibrium coarse-graining can preserve structure through an effective potential and can preserve equilibrium dynamics through a memory/noise pair. Transport under external driving is harder. When solvent degrees of freedom are removed, their **field-dependent response** is removed as well. Simply applying an external force to an equilibrium GLE assumes that the eliminated solvent remains an equilibrium bath, which can give the wrong mobility or drift response.
 
-<p align="center">
-  <img src="docs/assets/ch5_fig4_gleneck_framework.png" alt="GLE-NECK model construction workflow" width="900">
-</p>
+GLE-NECK addresses this by keeping the equilibrium GLE fixed and learning only the missing non-equilibrium response as a **field-conditioned corrective memory kernel**.
 
-The starting point is a common tension in molecular coarse graining. Equilibrium coarse-graining can preserve structure through a potential of mean force and can preserve equilibrium dynamics through a GLE memory/noise pair. Transport under external forcing is harder: the eliminated solvent is no longer just an equilibrium bath. It reorganizes around the driven retained variables, and this field-dependent solvent response is generally not represented by an equilibrium memory kernel.
+This public repository contains the **bulk binary-solute transport system** used to demonstrate the method. It includes processed artifacts, plotting utilities, reproducibility checks, tests, and minimal run scripts for figure generation. Raw trajectories, exploratory notebooks, scheduler logs, failed architecture sweeps, and draft thesis material are intentionally excluded.
 
-For retained solute coordinates, GLE-NECK writes the effective force as
+---
+
+## Core idea
+
+The equilibrium retained-solute GLE is first constructed from all-atom reference data:
+
+- a conservative PMF/IBI interaction is obtained from retained-solute RDF targets,
+- the equilibrium memory kernel is reconstructed from the all-atom VACF,
+- colored noise is generated consistently with the equilibrium memory kernel,
+- the resulting baseline GLE is validated against equilibrium RDF/VACF behavior.
+
+GLE-NECK then augments this equilibrium model with a learned non-equilibrium correction.
+
+With the sign convention used here, the retained-solute dynamics are written schematically as
 
 ```math
-\mathbf F_{\mathrm{GLE}\text{-}\mathrm{NECK}}(t)
+m\dot{\mathbf v}(t)
 =
 \mathbf F_{\mathrm{PMF}}(\mathbf R(t))
 +
+\mathbf F_{\mathrm{ext}}
+-
 \int_0^t d\tau\,
 \left[
-\mathbf K(t-\tau)
+\mathbf K_{\mathrm{eq}}(t-\tau)
 +
 \boldsymbol{\Xi}_{\phi}(t-\tau,\mathbf F_{\mathrm{ext}})
-\right]\cdot \mathbf v(\tau)
+\right]
+\mathbf v(\tau)
 +
-\boldsymbol{\eta}(t)
-+
-\mathbf F_{\mathrm{ext}} .
+\boldsymbol{\eta}_{\mathrm{eq}}(t).
 ```
 
-Here $\mathbf F_{\mathrm{PMF}}$ is obtained from retained-solute RDF targets, $\mathbf K$ is the equilibrium memory reconstructed from the all-atom VACF through a Volterra equation, and $\boldsymbol{\eta}$ is the corresponding colored noise. The new object is the corrective kernel $\boldsymbol{\Xi}_{\phi}$: a learned, field-conditioned memory contribution that adjusts the solvent response under non-equilibrium driving.
+Here:
 
-The zero-field recovery constraint is enforced by the parameterization
+- $\mathbf F_{\mathrm{PMF}}$ is the equilibrium conservative force,
+- $\mathbf K_{\mathrm{eq}}$ is the equilibrium memory kernel,
+- $\boldsymbol{\eta}_{\mathrm{eq}}$ is the corresponding equilibrium colored noise,
+- $\mathbf F_{\mathrm{ext}}$ is the applied external field,
+- $\boldsymbol{\Xi}_{\phi}$ is the learned non-equilibrium corrective kernel.
+
+The correction is constrained to vanish in the zero-field limit:
 
 ```math
 \boldsymbol{\Xi}_{\phi}(\tau,\mathbf F_{\mathrm{ext}})
@@ -51,30 +69,71 @@ The zero-field recovery constraint is enforced by the parameterization
 \|\mathbf F_{\mathrm{ext}}\|^2
 \mathcal N_{\phi}(\tau,\mathbf F_{\mathrm{ext}}),
 \qquad
-\boldsymbol{\Xi}_{\phi}(\tau,\mathbf 0)=\mathbf 0 .
+\boldsymbol{\Xi}_{\phi}(\tau,\mathbf 0)=\mathbf 0.
 ```
 
-Thus the corrective term vanishes smoothly as the external field approaches zero, leaving the audited equilibrium GLE unchanged.
+Thus, GLE-NECK does not overwrite the audited equilibrium GLE. It learns a finite-field correction that activates only under external driving.
 
-## Framework
+> **Sign convention.** The equations above use the standard GLE convention in which memory/friction enters with a minus sign. If a code path stores kernels with the opposite sign internally, the implementation should be interpreted according to its documented force convention.
+
+---
+
+## Model construction
+
+<p align="center">
+  <img src="docs/assets/ch5_fig4_gleneck_framework.png" alt="GLE-NECK model construction workflow" width="900">
+</p>
+
+The workflow separates equilibrium coarse-graining from transport correction:
+
+1. **Equilibrium structure**  
+   Compute retained-solute RDFs from explicit-solvent all-atom simulations.
+
+2. **Conservative interaction**  
+   Invert RDF targets to obtain tabulated PMF/IBI conservative interactions.
+
+3. **Equilibrium dynamics**  
+   Compute the retained-solute VACF and reconstruct the equilibrium memory kernel.
+
+4. **Equilibrium GLE validation**  
+   Validate the baseline GLE against RDF and VACF targets.
+
+5. **Non-equilibrium transport data**  
+   Run explicit-solvent driven simulations and compute steady-state drift velocities.
+
+6. **Corrective-kernel training**  
+   Learn $\boldsymbol{\Xi}_{\phi}$ through differentiable GLE simulation using drift-velocity loss.
+
+7. **Transport validation**  
+   Compare GLE-NECK mobility predictions against all-atom reference mobilities.
+
+---
+
+## Differentiable training
 
 <p align="center">
   <img src="docs/assets/ch5_fig6_differentiable_training.png" alt="Differentiable GLE-NECK training framework" width="900">
 </p>
 
-GLE-NECK is trained top-down on transport while keeping the equilibrium construction fixed. The differentiable GLE integrator maps a corrective-kernel parameter vector $\phi$ and an external field $F$ to a predicted steady-state drift velocity,
+The corrective kernel is trained top-down on transport observables. For a corrective-kernel parameter vector $\phi$ and external field $F$, the differentiable GLE integrator produces a trajectory and a steady-state drift estimate:
 
 ```math
-v_{\mathrm{ss}}^{\mathrm{GLE}\text{-}\mathrm{NECK}}(\phi,F)
+v_{\mathrm{ss}}^{\mathrm{GLE\text{-}NECK}}(\phi,F)
 =
-\mathcal S_T\!\left[
+\mathcal S_T
+\left[
 \mathbf R_t,\mathbf v_t;
-\mathbf F_{\mathrm{PMF}},\mathbf K,\boldsymbol{\eta},
-\boldsymbol{\Xi}_{\phi},F
+\mathbf F_{\mathrm{PMF}},
+\mathbf K_{\mathrm{eq}},
+\boldsymbol{\eta}_{\mathrm{eq}},
+\boldsymbol{\Xi}_{\phi},
+F
 \right],
 ```
 
-where $\mathcal S_T$ denotes time integration followed by a steady-state velocity estimator. For a set of training fields $\mathcal E_{\mathrm{train}}$, the drift-matching objective is
+where $\mathcal S_T$ denotes GLE time integration followed by a steady-state velocity estimator.
+
+For training fields $\mathcal E_{\mathrm{train}}$, the loss is
 
 ```math
 \mathcal L(\phi)
@@ -82,7 +141,7 @@ where $\mathcal S_T$ denotes time integration followed by a steady-state velocit
 \frac{1}{|\mathcal E_{\mathrm{train}}|}
 \sum_{F\in\mathcal E_{\mathrm{train}}}
 \left[
-v_{\mathrm{ss}}^{\mathrm{GLE}\text{-}\mathrm{NECK}}(\phi,F)
+v_{\mathrm{ss}}^{\mathrm{GLE\text{-}NECK}}(\phi,F)
 -
 v_{\mathrm{ss}}^{\mathrm{AA}}(F)
 \right]^2
@@ -90,80 +149,82 @@ v_{\mathrm{ss}}^{\mathrm{AA}}(F)
 \lambda\,\mathcal R(\phi).
 ```
 
-In the promoted bulk result, $\mathcal E_{\mathrm{train}}=\{0.5,1.0,2.0\}$. Single-point training (SPT) is retained as a diagnostic baseline, while multi-point training (MPT) is the promoted model because it constrains a shared field-conditioned correction across the transport curve.
+In the promoted bulk result,
 
-The workflow is:
+```math
+\mathcal E_{\mathrm{train}}=\{0.5,1.0,2.0\}.
+```
 
-1. Sample an explicit-solvent all-atom reference at equilibrium and under steady external fields.
-2. Compute equilibrium RDFs, the retained-solute VACF, and the all-atom mobility curve.
-3. Invert retained-solute RDFs to obtain tabulated PMF/IBI conservative interactions.
-4. Reconstruct the equilibrium memory kernel from the VACF and validate the baseline GLE against RDF/VACF targets.
-5. Train $\boldsymbol{\Xi}_{\phi}$ through differentiable GLE simulation using drift-velocity loss.
-6. Evaluate SPT and MPT mobility curves, training loss, held-out mobility loss, and corrective-kernel evolution.
+Single-point training is retained as a diagnostic baseline. Multi-point training is the promoted model because it learns a shared field-conditioned correction across the transport curve.
+
+---
 
 ## Results
 
-Generate the complete bulk figure set with:
+The public figure-generation pipeline reproduces the bulk transport figures from processed artifacts:
 
 ```bash
 python scripts/make_bulk_figures.py --all
 ```
 
-The generated figures are written to `figures/bulk/` as both PNG and PDF:
+Expected outputs include:
 
-| Figure | Purpose |
-| --- | --- |
-| `01_aa_equilibrium_targets` | AA RDF targets, including solvent-solvent diagnostic RDF, and IBI/PMF solute potentials |
-| `02_gle_baseline_benchmark` | Baseline GLE RDF, memory kernel, and long-window VACF validation |
-| `03_baseline_mobility` | AA mobility target versus equilibrium GLE response |
-| `04_spt_vs_mpt_loss` | SPT/MPT training loss and post-hoc held-out mobility validation loss |
-| `05_spt_vs_mpt_mobility` | AA, baseline GLE, SPT, and MPT mobility curves over the promoted `E <= 2` regime |
-| `06_mpt_kernel_evolution_logtau` | MPT corrective-kernel evolution on a logarithmic lag-time axis |
-| `07_field_conditioned_kernel` | Final corrective kernel versus field, shown every 0.25 field units through `E = 2` |
+- equilibrium RDF/VACF checks,
+- reconstructed memory kernels,
+- single-point training diagnostics,
+- multi-point training diagnostics,
+- corrective-kernel evolution,
+- mobility comparison curves,
+- held-out mobility loss summaries.
 
-<p align="center">
-  <img src="figures/bulk/02_gle_baseline_benchmark.png" alt="Bulk GLE baseline benchmark" width="850">
-</p>
+Generated figures are written to:
 
-<p align="center">
-  <img src="figures/bulk/05_spt_vs_mpt_mobility.png" alt="Bulk GLE-NECK mobility comparison" width="650">
-</p>
+```text
+figures/bulk/
+```
 
-<p align="center">
-  <img src="figures/bulk/06_mpt_kernel_evolution_logtau.png" alt="Bulk MPT corrective-kernel evolution" width="850">
-</p>
+---
 
 ## Installation
 
-For artifact-backed figure reproduction and tests:
+Clone the repository and install the package in editable mode:
 
 ```bash
 git clone https://github.com/ishannadkarni1997/GLE-NECK.git
 cd GLE-NECK
+
 python3 -m venv .venv
 . .venv/bin/activate
+
 python -m pip install --upgrade pip
 python -m pip install -e '.[dev]'
 ```
 
-For full differentiable simulations and training, install the optional JAX stack in an environment appropriate for your CPU/GPU platform:
+For differentiable simulations and training, install the optional JAX stack in an environment appropriate for your CPU/GPU platform:
 
 ```bash
 python -m pip install -e '.[dev,jax]'
 ```
 
+---
+
 ## Reproducibility
 
-Regenerate figures:
+Regenerate all public bulk figures:
 
 ```bash
 python scripts/make_bulk_figures.py --all
 ```
 
-Run artifact checks and tests:
+Run artifact checks:
 
 ```bash
 python scripts/check_bulk_reproducibility.py
+```
+
+Run tests:
+
+```bash
 pytest
 ```
 
@@ -174,7 +235,9 @@ gleneck-bulk-figures --all
 gleneck-bulk-check
 ```
 
-## Repository Layout
+---
+
+## Repository layout
 
 ```text
 src/gleneck/                 reusable Python package
@@ -182,20 +245,60 @@ scripts/                     public command-line workflows
 configs/                     locked bulk run configuration
 data/processed/bulk/         compact processed artifacts
 figures/bulk/                generated public figures
-docs/                        method, units, provenance, and cluster notes
+docs/                        method notes, units, provenance, and cluster notes
 examples/                    minimal reproduction workflow
 slurm/                       generic GPU job template
 tests/                       artifact, plotting, and hygiene tests
 ```
 
-## Data Policy
+---
 
-Committed data are limited to compact processed artifacts required to reproduce the public figures and smoke tests. The repository does not include raw trajectories, position/velocity histories, scheduler logs, failed training branches, or draft manuscript materials. Those files should be archived separately for formal publication if they are needed for full reruns.
+## What is included
+
+This repository includes:
+
+- processed bulk artifacts,
+- plotting and figure-generation scripts,
+- minimal reproduction workflows,
+- locked public configuration files,
+- lightweight tests and artifact checks,
+- documentation for units, provenance, and public run assumptions.
+
+## What is not included
+
+This repository does not include:
+
+- raw all-atom trajectories,
+- raw CG/GLE trajectory dumps,
+- exploratory notebooks,
+- failed architecture sweeps,
+- scheduler logs,
+- unpublished thesis drafts,
+- private analysis notes.
+
+The repository is intentionally compact so that public figures and checks can be reproduced without distributing large raw simulation files.
+
+---
 
 ## Status
 
-The bulk workflow is the maintained public path. The promoted GLE-NECK result uses a neural/asymptotic corrective kernel trained at `E = 0.5, 1.0, 2.0` with `l_max = 500`. The learned correction reproduces the selected mobility regime well but decays faster than the audited equilibrium memory kernel; this is documented as a current modeling caveat rather than hidden in the implementation.
+This is research code associated with an ongoing thesis/manuscript project. The public release is designed for reproducibility of the **bulk GLE-NECK artifact pipeline**, not as a general-purpose molecular dynamics engine.
+
+Known scope boundaries:
+
+- the public release focuses on the bulk binary-solute system,
+- confined-system workflows are not included in this repository,
+- raw simulation trajectories are not distributed,
+- the learned corrective kernel is intended as a transport-targeted effective response, not a unique microscopic projection-operator object.
+
+---
 
 ## Citation
 
-If this code is useful, please cite the associated thesis or manuscript when available. A placeholder citation file is provided in [`CITATION.cff`](CITATION.cff).
+If this code is useful, please cite the associated manuscript when available.
+
+---
+
+## License
+
+This project is released under the MIT License. See [`LICENSE`](LICENSE).

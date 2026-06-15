@@ -24,8 +24,8 @@ The starting point is a common tension in molecular coarse graining. Equilibrium
 
 For retained solute coordinates, GLE-NECK writes the effective force as
 
-$$
-\mathbf F_{\mathrm{GLE\text{-}NECK}}(t)
+```math
+\mathbf F_{\mathrm{GLE}\text{-}\mathrm{NECK}}(t)
 =
 \mathbf F_{\mathrm{PMF}}(\mathbf R(t))
 +
@@ -39,20 +39,20 @@ $$
 \boldsymbol{\eta}(t)
 +
 \mathbf F_{\mathrm{ext}} .
-$$
+```
 
 Here $\mathbf F_{\mathrm{PMF}}$ is obtained from retained-solute RDF targets, $\mathbf K$ is the equilibrium memory reconstructed from the all-atom VACF through a Volterra equation, and $\boldsymbol{\eta}$ is the corresponding colored noise. The new object is the corrective kernel $\boldsymbol{\Xi}_{\phi}$: a learned, field-conditioned memory contribution that adjusts the solvent response under non-equilibrium driving.
 
 The zero-field recovery constraint is enforced by the parameterization
 
-$$
+```math
 \boldsymbol{\Xi}_{\phi}(\tau,\mathbf F_{\mathrm{ext}})
 =
 \|\mathbf F_{\mathrm{ext}}\|^2
 \mathcal N_{\phi}(\tau,\mathbf F_{\mathrm{ext}}),
 \qquad
 \boldsymbol{\Xi}_{\phi}(\tau,\mathbf 0)=\mathbf 0 .
-$$
+```
 
 Thus the corrective term vanishes smoothly as the external field approaches zero, leaving the audited equilibrium GLE unchanged.
 
@@ -64,31 +64,31 @@ Thus the corrective term vanishes smoothly as the external field approaches zero
 
 GLE-NECK is trained top-down on transport while keeping the equilibrium construction fixed. The differentiable GLE integrator maps a corrective-kernel parameter vector $\phi$ and an external field $F$ to a predicted steady-state drift velocity,
 
-$$
-v_{\mathrm{ss}}^{\mathrm{GLE\text{-}NECK}}(\phi,F)
+```math
+v_{\mathrm{ss}}^{\mathrm{GLE}\text{-}\mathrm{NECK}}(\phi,F)
 =
 \mathcal S_T\!\left[
 \mathbf R_t,\mathbf v_t;
 \mathbf F_{\mathrm{PMF}},\mathbf K,\boldsymbol{\eta},
 \boldsymbol{\Xi}_{\phi},F
 \right],
-$$
+```
 
 where $\mathcal S_T$ denotes time integration followed by a steady-state velocity estimator. For a set of training fields $\mathcal E_{\mathrm{train}}$, the drift-matching objective is
 
-$$
+```math
 \mathcal L(\phi)
 =
 \frac{1}{|\mathcal E_{\mathrm{train}}|}
 \sum_{F\in\mathcal E_{\mathrm{train}}}
 \left[
-v_{\mathrm{ss}}^{\mathrm{GLE\text{-}NECK}}(\phi,F)
+v_{\mathrm{ss}}^{\mathrm{GLE}\text{-}\mathrm{NECK}}(\phi,F)
 -
 v_{\mathrm{ss}}^{\mathrm{AA}}(F)
 \right]^2
 +
 \lambda\,\mathcal R(\phi).
-$$
+```
 
 In the promoted bulk result, $\mathcal E_{\mathrm{train}}=\{0.5,1.0,2.0\}$. Single-point training (SPT) is retained as a diagnostic baseline, while multi-point training (MPT) is the promoted model because it constrains a shared field-conditioned correction across the transport curve.
 

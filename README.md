@@ -328,14 +328,14 @@ The repository is intentionally compact so that public figures and checks can be
 
 ## Status
 
-This is research code associated with an ongoing thesis/manuscript project. The public release is designed for reproducibility of the **bulk GLE-NECK artifact pipeline**, not as a general-purpose molecular dynamics engine.
+This is research code associated with an ongoing project. The public release is designed for reproducibility of the **bulk GLE-NECK artifact pipeline**, not as a general-purpose molecular dynamics engine.
 
 Known scope boundaries:
 
-- the public release focuses on the bulk binary-solute system,
+- the release focuses on the bulk binary-solute system,
 - confined-system workflows are not included in this repository,
 - raw simulation trajectories are not distributed,
-- the learned corrective kernel is intended as a transport-targeted effective response, not a unique microscopic projection-operator object.
+- the learned corrective kernel is intended as a transport-targeted effective response correction, not a unique microscopic projection-operator object. The authors observe depending on the optimization and regularization different functional forms may be obtained.
 
 ---
 

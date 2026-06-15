@@ -74,7 +74,6 @@ The correction is constrained to vanish in the zero-field limit:
 
 Thus, GLE-NECK does not overwrite the audited equilibrium GLE. It learns a finite-field correction that activates only under external driving.
 
-> **Sign convention.** The equations above use the standard GLE convention in which memory/friction enters with a minus sign. If a code path stores kernels with the opposite sign internally, the implementation should be interpreted according to its documented force convention.
 
 ---
 

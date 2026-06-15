@@ -7,7 +7,7 @@
 [![Status](https://img.shields.io/badge/status-research%20code-orange)](#status)
 
 <p align="center">
-  <img src="docs/assets/gleneck-banner.png" alt="GLE-NECK project graphic" width="650">
+  <img src="docs/assets/gleneck-banner.png" alt="GLE-NECK project graphic" width="400">
 </p>
 
 ## Overview

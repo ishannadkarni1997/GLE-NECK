@@ -297,35 +297,6 @@ slurm/                       generic GPU job template
 tests/                       artifact, plotting, and hygiene tests
 ```
 
----
-
-## What is included
-
-This repository includes:
-
-- processed bulk artifacts,
-- plotting and figure-generation scripts,
-- minimal reproduction workflows,
-- locked public configuration files,
-- lightweight tests and artifact checks,
-- documentation for units, provenance, and public run assumptions.
-
-## What is not included
-
-This repository does not include:
-
-- raw all-atom trajectories,
-- raw CG/GLE trajectory dumps,
-- exploratory notebooks,
-- failed architecture sweeps,
-- scheduler logs,
-- unpublished thesis drafts,
-- private analysis notes.
-
-The repository is intentionally compact so that public figures and checks can be reproduced without distributing large raw simulation files.
-
----
-
 ## Status
 
 This is research code associated with an ongoing project. The public release is designed for reproducibility of the **bulk GLE-NECK artifact pipeline**, not as a general-purpose molecular dynamics engine.

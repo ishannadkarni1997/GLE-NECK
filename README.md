@@ -236,25 +236,21 @@ emergence, differentiable training, and confined-system memory structure:
 <tr>
 <td align="center">
 <img src="docs/assets/results_animations/gle_neck_mobility_response.gif" alt="GLE NECK mobility response" width="900">
-<br><strong>GLE NECK mobility response</strong>
 </td>
 </tr>
 <tr>
 <td align="center">
 <img src="docs/assets/results_animations/emergence_non_equilibrium_memory.gif" alt="Emergence of non-equilibrium memory with field" width="900">
-<br><strong>Emergence of non-equilibrium memory with field</strong>
 </td>
 </tr>
 <tr>
 <td align="center">
 <img src="docs/assets/results_animations/corrective_memory_training.gif" alt="Corrective memory emerging during training" width="900">
-<br><strong>Corrective memory emerging during training</strong>
 </td>
 </tr>
 <tr>
 <td align="center">
 <img src="docs/assets/results_animations/confinement_memory_emergence.gif" alt="Emergence of spatial non-equilibrium memory in confinement" width="900">
-<br><strong>Emergence of spatial non-equilibrium memory</strong>
 </td>
 </tr>
 </table>

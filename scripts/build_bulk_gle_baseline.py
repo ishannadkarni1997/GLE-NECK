@@ -28,7 +28,7 @@ PAIR_COLUMNS = (
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        description="Build fresh bulk GLE baseline artifacts from AA equilibrium RDF and VACF targets."
+        description="Build a bulk GLE baseline from AA equilibrium RDF and VACF targets."
     )
     parser.add_argument("--rdf", type=Path, required=True, help="Smoothed AA RDF target CSV.")
     parser.add_argument("--vacf", type=Path, required=True, help="AA retained-solute VACF target CSV.")

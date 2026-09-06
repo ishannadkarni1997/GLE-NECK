@@ -20,8 +20,8 @@ class BulkSpeciesContract:
     solvent_diagnostic_label: str = "W-W"
     notes: str = (
         "The explicit reference system contains retained solutes A/B in explicit solvent W/C. "
-        "The clean GLE/CG model propagates only A/B solute coordinates. Solvent structure such "
-        "as W-W RDFs is diagnostic provenance for the explicit reference liquid; solvent effects "
+        "The GLE/CG model propagates only A/B solute coordinates. Solvent structure such "
+        "as W-W RDFs characterizes the explicit reference liquid; solvent effects "
         "enter the GLE through the PMF, equilibrium memory/noise, and learned NECK correction."
     )
 
@@ -73,7 +73,7 @@ class BulkModelConfig:
 
 @dataclass(frozen=True)
 class BulkTrainingConfig:
-    """Transport-targeted training target for one bulk GLE-NECK run."""
+    """Training fields, target drifts, and settings for one bulk GLE-NECK run."""
 
     name: str
     mode: str
@@ -135,7 +135,7 @@ class BulkAATargetConfig:
     )
     seed: int = 0
     notes: str = (
-        "Explicit reference target generator for the final bulk interpretation: "
+        "Explicit-solvent reference model: "
         "A/B solutes in W/C solvent. The solute-counter-solvent force mode is a "
         "zero-net-force diagnostic control."
     )
@@ -165,7 +165,7 @@ DEFAULT_SPT_LOW_TRAINING = BulkTrainingConfig(
     fields=(0.5,),
     target_drifts=(0.260510302147,),
     epochs=300,
-    notes="Public single-point comparison target.",
+    notes="Single-point comparison at E = 0.5.",
 )
 
 DEFAULT_SPT_HIGH_TRAINING = BulkTrainingConfig(
@@ -174,7 +174,7 @@ DEFAULT_SPT_HIGH_TRAINING = BulkTrainingConfig(
     fields=(1.0,),
     target_drifts=(0.414644441332,),
     epochs=300,
-    notes="Public middle-field single-point comparison target.",
+    notes="Single-point comparison at E = 1.0.",
 )
 
 DEFAULT_SPT_MAX_TRAINING = BulkTrainingConfig(
@@ -183,7 +183,7 @@ DEFAULT_SPT_MAX_TRAINING = BulkTrainingConfig(
     fields=(2.0,),
     target_drifts=(0.615561361077,),
     epochs=300,
-    notes="Public high-field single-point comparison target.",
+    notes="Single-point comparison at E = 2.0.",
 )
 
 DEFAULT_MPT_TRAINING = BulkTrainingConfig(
@@ -192,7 +192,7 @@ DEFAULT_MPT_TRAINING = BulkTrainingConfig(
     fields=(0.5, 1.0, 2.0),
     target_drifts=(0.260510302147, 0.414644441332, 0.615561361077),
     epochs=800,
-    notes="Promoted public multi-point training target.",
+    notes="Multi-point training at E = 0.5, 1.0, and 2.0.",
 )
 
 

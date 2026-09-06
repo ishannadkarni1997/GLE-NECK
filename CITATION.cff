@@ -1,6 +1,6 @@
 cff-version: 1.2.0
 title: "GLE-NECK: Generalized Langevin Equation with Non-Equilibrium Corrective Kernel"
-message: "If you use this code or data, please cite the associated thesis/manuscript."
+message: "Manuscript in preparation. Publication details will be added when available."
 type: software
 authors:
   - family-names: Nadkarni
@@ -9,4 +9,4 @@ repository-code: "https://github.com/ishannadkarni1997/GLE-NECK"
 license: MIT
 version: "0.1.0"
 date-released: "2026-06-12"
-abstract: "Reproducible code and compact artifacts for all-atom target generation, equilibrium GLE construction, and non-equilibrium corrective-kernel training in coarse-grained transport."
+abstract: "Simulation and training code for learning non-equilibrium memory-kernel corrections to a coarse-grained generalized Langevin equation, with processed data for bulk transport comparisons."

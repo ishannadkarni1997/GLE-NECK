@@ -1,6 +1,6 @@
 # Bulk GLE/GLE-NECK Unit Conventions
 
-This project keeps one convention for the clean bulk workflow.
+The bulk simulations use internal JAX-MD time units; figures report time in picoseconds. The conversions below apply to the integrator, saved data, and plotting scripts.
 
 ## Simulation Internals
 

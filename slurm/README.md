@@ -1,6 +1,6 @@
 # SLURM Templates
 
-The files in this directory are generic starting points for running GLE-NECK jobs on a GPU cluster. They intentionally avoid user-specific paths.
+Use the template in this directory to run GLE-NECK jobs on a GPU cluster. Set the workspace path and adapt the resource requests to your cluster.
 
 Before submitting jobs, set:
 
@@ -13,7 +13,7 @@ Expected layout:
 ```text
 $GLENECK_WORKSPACE/
   repo/          # Git checkout
-  data_private/  # raw trajectories and large private artifacts
+  data_private/  # raw trajectories and large checkpoints
   runs/          # generated model outputs
   slurm_logs/    # scheduler logs
 ```

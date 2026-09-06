@@ -1,4 +1,4 @@
-"""Clean reproducibility layer for GLE-NECK figures and artifacts."""
+"""GLE-NECK simulation, training, and analysis tools."""
 
 __all__ = ["__version__"]
 

@@ -12,7 +12,7 @@ set -euo pipefail
 
 cd $GLENECK_WORKSPACE/repo
 
-# TODO: replace these with cluster-specific module/conda commands after inspection.
+# Set the CUDA module and conda environment for your cluster.
 # module load cuda
 # conda activate gleneck-jax
 

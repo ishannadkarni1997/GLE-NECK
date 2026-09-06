@@ -1,24 +1,19 @@
 # Cluster Environment Notes
 
-Target workspace:
+These notes record the environment used for the bulk GPU checks on May 31, 2026. Set the workspace location for your cluster with:
 
 ```text
 $GLENECK_WORKSPACE
 ```
 
-The cluster path is not mounted into the Mac workspace, but it is reachable through SSH alias `stjude-slurm`.
-
-## Inspected Login Environment
-
-Inspected on May 31, 2026 through SSH alias `stjude-slurm`.
+## Recorded Environment
 
 - Login host: `splpslurm04`
-- Workspace created for this project: `$GLENECK_WORKSPACE`
-- Resolved filesystem path observed during editable install: `$GLENECK_WORKSPACE`
+- Workspace: `$GLENECK_WORKSPACE`
 - Default Python: `Python 3.13.12` at `$CONDA_PREFIX_ROOT/bin/python`
 - Default Python did not include NumPy or Matplotlib before creating the figure-reproduction venv.
-- Figure-reproduction venv was created temporarily with Python `3.13.12`, NumPy `2.4.6`, and Matplotlib `3.10.9`, then removed after figures were generated. The bundle can recreate it if needed.
-- Active scientific rerun environment: conda env `gleneck-jax`
+- Figure generation was tested with Python `3.13.12`, NumPy `2.4.6`, and Matplotlib `3.10.9`.
+- Simulation and training environment: conda env `gleneck-jax`
 - `gleneck-jax` path: `$CONDA_PREFIX_ROOT/envs/gleneck-jax`
 - `gleneck-jax` Python: `3.11.15`
 - `gleneck-jax` package versions after setup:
@@ -63,7 +58,7 @@ Available CUDA module families observed:
 - `cuda12.8/toolkit/12.8.1`
 - `cuda12.9/toolkit/12.9.0`
 
-## Intended Cluster Layout
+## Workspace Layout
 
 ```text
 $GLENECK_WORKSPACE/
@@ -73,12 +68,12 @@ $GLENECK_WORKSPACE/
   slurm_logs/        # scheduler stdout/stderr
 ```
 
-## Remaining To Inspect
+## Cluster-Specific Setup
 
-Record the following before running training jobs:
+Before running training jobs, check:
 
 - Whether long training jobs need explicit CUDA modules or can rely on the pip-bundled CUDA libraries from `jax[cuda12]`.
 - Whether multi-GPU jobs require NCCL-specific SLURM settings.
-- Runtime memory use for the first bulk smoke job.
+- Runtime memory use for the intended system size.
 
-Figure reproduction should remain CPU-only and artifact-based. JAX/JAX-MD are needed only for later end-to-end simulation and training reproduction.
+Figure generation and processed-data checks run on CPU. JAX/JAX-MD are required for simulation and training.

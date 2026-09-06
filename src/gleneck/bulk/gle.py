@@ -686,7 +686,7 @@ def run_gle(
         conservative = pairwise_tabulated_force(stack, pos, species, r_bins, potential_table, config)
         memory_convolution = jnp.tensordot(kernel[1:], hist_v[:-1], axes=(0, 0))
         if config.memory_history_scaling == "force-units":
-            # Notebook force-units convention used by the old working clean baseline:
+            # Force-units convention used by the notebook baseline:
             # convert the history convolution to force-like units before the velocity update.
             friction = -memory_convolution * (dt / inv_mass)
         elif config.memory_history_scaling == "legacy-training":

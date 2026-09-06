@@ -1,6 +1,6 @@
 # Bulk Result Provenance
 
-This document records the public provenance for the promoted bulk result.
+This document records the reference data, training settings, and validation procedure for the bulk results.
 
 ## Target Protocol
 
@@ -10,7 +10,7 @@ This document records the public provenance for the promoted bulk result.
 - Driven response: solute drift relative to the solvent reference frame.
 - Production thermostat choice: Langevin-style transverse/peculiar thermostatting that avoids thermostatting the driven direction.
 
-## Baseline Artifacts
+## Baseline Data
 
 - `aa_equilibrium_rdf.csv`: smoothed AA RDF targets, including `W-W` as solvent diagnostic.
 - `aa_vacf.csv`: AA retained-solute VACF target.
@@ -19,30 +19,26 @@ This document records the public provenance for the promoted bulk result.
 - `gle_baseline_rdf.csv` and `gle_baseline_vacf.csv`: baseline retained-solute GLE validation outputs.
 - `gle_baseline_mobility.csv`: baseline non-equilibrium response before adding GLE-NECK.
 
-The public baseline VACF artifacts are stored on a long `~204 ps` grid; the baseline figure displays the validated `0-200 ps` window.
-The public baseline RDF artifact is the smoothed output of a longer streamed zero-field GLE run, which accumulates RDF histograms without retaining the full position trajectory.
+The baseline VACF data span approximately `204 ps`; the figure displays the `0-200 ps` comparison window.
+The baseline RDF data are smoothed histograms from a longer zero-field GLE run. Histograms were accumulated during simulation without storing the full position trajectory.
 
-## Promoted GLE-NECK Candidate
+## Multi-Point GLE-NECK Model
 
-- Corrective model: neural/asymptotic memory correction.
+- Corrective model: neural memory correction constrained to vanish at zero field.
 - Zero-field gate: `E^2`.
 - Training fields: `E = 0.5, 1.0, 2.0`.
 - Lag window: `l_max = 500`.
 - Optimizer: Adam.
-- Promoted artifacts:
+- Result files:
   - `gleneck_mpt_mobility.csv`
   - `gleneck_mpt_training_loss.csv`
   - `gleneck_validation_loss.csv`
   - `gleneck_kernel_evolution.npz`
 
-The corrective kernel gives a strong mobility match over the selected training regime. It also decays faster than the equilibrium memory kernel. This is retained as a current modeling caveat and should be discussed explicitly in any paper or thesis text that uses the result.
+Mobility errors are reported in `gleneck_validation_loss.csv`. The learned corrective kernel decays faster than the equilibrium memory kernel. Matching drift velocities alone does not establish that the fitted memory timescale is unique or microscopically correct.
 
-The validation-loss panel is a post-hoc metric computed from saved final mobility curves, not an additional training run. For each SPT or MPT model, validation MSE is evaluated against AA mobility over the promoted `E <= 2` field regime after excluding that model's training fields.
+The validation-loss panel is computed from the saved final mobility curves. For each single-point (SPT) or multi-point (MPT) model, validation MSE is evaluated against AA mobility over `E <= 2` after excluding that model's training fields. No additional training is performed for this calculation.
 
 The field-conditioned-kernel figure shows the exact trained kernels at `E = 0.5, 1.0, 2.0`, the zero-field limit imposed by the `E^2` gate, and linear field interpolation at intermediate 0.25-spaced visualization points. The intermediate curves are for presentation of the learned field dependence, not additional training simulations.
 
-The SPT curves are included as comparison baselines. The `E = 2.0` SPT run completed and matched its training point, but its diagnostics include a minimum-pair-distance warning; the promoted result is therefore the MPT candidate, not the high-field SPT branch.
-
-## Non-Public Material
-
-Exploratory regularizer sweeps, alternative kernel parameterizations, raw trajectories, scheduler logs, and draft manuscript material are not included in the public repository. They belong in private working storage or a separate archival data release.
+The SPT curves are comparison baselines. The `E = 2.0` SPT run completed and matched its training point, but triggered a minimum-pair-distance warning and is marked `unstable` in `bulk_result_summary.json`. The main bulk result uses the MPT model.

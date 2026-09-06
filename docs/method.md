@@ -1,6 +1,6 @@
 # Bulk Method
 
-The public workflow targets a homogeneous bulk liquid with retained solute species `A` and `B` in an explicit solvent bath. The final GLE and GLE-NECK simulations retain only the solute coordinates.
+The reference system is a homogeneous bulk liquid with solute species `A` and `B` in an explicit solvent bath. The GLE and GLE-NECK simulations retain only the solute coordinates.
 
 ## 1. All-Atom Reference Targets
 
@@ -22,7 +22,7 @@ U_ij(r) = -kBT log g_ij(r)
 
 with short-range regularization and tail shifting. These interactions define the conservative part of the retained GLE.
 
-The equilibrium memory kernel is reconstructed from the normalized AA VACF through a Volterra solve. Public plots report lag time in ps and memory in `ps^-2`.
+The equilibrium memory kernel is reconstructed from the normalized AA VACF through a Volterra solve. Plots report lag time in ps and memory in `ps^-2`.
 
 ## 3. Baseline GLE
 
@@ -33,7 +33,7 @@ The baseline GLE combines:
 - colored noise consistent with the equilibrium memory;
 - external forcing for transport validation.
 
-The baseline is validated against AA RDF and VACF targets before any non-equilibrium correction is interpreted.
+The baseline is compared with AA RDF and VACF targets before training the non-equilibrium correction.
 
 ## 4. Corrective Kernel
 
@@ -44,4 +44,4 @@ M_total(E, tau) = M_eq(tau) + Delta M(E, tau)
 Delta M(E, tau) = E^2 N_theta(E, tau)
 ```
 
-The `E^2` gate enforces zero-field recovery. The promoted bulk result uses a neural/asymptotic corrective kernel trained on `E = 0.5, 1.0, 2.0` and evaluated against the AA mobility curve.
+The `E^2` factor makes the correction vanish at zero field. The bulk multi-point model is trained on `E = 0.5, 1.0, 2.0` and evaluated against the AA mobility curve.

@@ -12,13 +12,13 @@
 
 ## Overview
 
-GLE-NECK is a differentiable coarse-grained transport workflow for learning **non-equilibrium corrections to an equilibrium generalized Langevin equation (GLE)**.
+GLE-NECK learns **non-equilibrium memory-kernel corrections** for coarse-grained molecular dynamics. Training differentiates through a generalized Langevin equation (GLE) simulation to match all-atom drift velocities under external forcing.
 
 Equilibrium coarse-graining can preserve structure through an effective potential and can preserve equilibrium dynamics through a memory/noise pair. Transport under external driving is harder. When solvent degrees of freedom are removed, their **field-dependent response** is removed as well. Simply applying an external force to an equilibrium GLE assumes that the eliminated solvent remains an equilibrium bath, which can give the wrong mobility or drift response.
 
 GLE-NECK addresses this by keeping the equilibrium GLE fixed and learning only the missing non-equilibrium response as a **field-conditioned corrective memory kernel**.
 
-This public repository contains the **bulk binary-solute transport system** used to demonstrate the method. It includes processed artifacts, plotting utilities, reproducibility checks, tests, and minimal run scripts for figure generation. Raw trajectories, exploratory notebooks, scheduler logs, failed architecture sweeps, and draft thesis material are intentionally excluded.
+This repository contains the **bulk binary-solute transport model**, processed reference data, simulation and training scripts, and tests. The results below compare its drift response with all-atom simulations and show how the learned memory changes with field and training.
 
 ---
 
@@ -72,7 +72,7 @@ The correction is constrained to vanish in the zero-field limit:
 \boldsymbol{\Xi}_{\phi}(\tau,\mathbf 0)=\mathbf 0.
 ```
 
-Thus, GLE-NECK does not overwrite the audited equilibrium GLE. It learns a finite-field correction that activates only under external driving.
+The equilibrium model is recovered at zero field. At finite fields, the learned kernel corrects the transport response.
 
 
 ---
@@ -148,13 +148,13 @@ v_{\mathrm{ss}}^{\mathrm{AA}}(F)
 \lambda\,\mathcal R(\phi).
 ```
 
-In the promoted bulk result,
+The multi-point model shown below uses the training fields
 
 ```math
 \mathcal E_{\mathrm{train}}=\{0.5,1.0,2.0\}.
 ```
 
-Single-point training is retained as a diagnostic baseline. Multi-point training is the promoted model because it learns a shared field-conditioned correction across the transport curve.
+Single-point models are trained at one field each and serve as comparison baselines. The multi-point model learns one field-dependent correction from all three training fields.
 
 ### Training algorithm
 
@@ -207,7 +207,7 @@ The algorithm is written for the bulk force-conditioned kernel. For confined tra
 
 ## Results
 
-The public figure-generation pipeline reproduces the bulk transport figures from processed artifacts:
+Regenerate the bulk transport figures from the included processed data:
 
 ```bash
 python scripts/make_bulk_figures.py --all
@@ -288,7 +288,7 @@ Regenerate all public bulk figures:
 python scripts/make_bulk_figures.py --all
 ```
 
-Run artifact checks:
+Check the processed data and generated figures:
 
 ```bash
 python scripts/check_bulk_reproducibility.py
@@ -312,33 +312,28 @@ gleneck-bulk-check
 ## Repository layout
 
 ```text
-src/gleneck/                 reusable Python package
-scripts/                     public command-line workflows
-configs/                     locked bulk run configuration
-data/processed/bulk/         compact processed artifacts
-figures/bulk/                generated public figures
-docs/                        method notes, units, provenance, and cluster notes
-examples/                    minimal reproduction workflow
-slurm/                       generic GPU job template
-tests/                       artifact, plotting, and hygiene tests
+src/gleneck/                 simulation, training, and analysis code
+scripts/                    command-line entry points
+configs/                    bulk model and training settings
+data/processed/bulk/         processed reference data and model results
+figures/bulk/                generated bulk figures
+docs/                       method, units, data provenance, and visualizations
+examples/                   figure reproduction example
+slurm/                      GPU job template
+tests/                      data validation, plotting, and repository checks
 ```
 
 ## Status
 
-This is research code associated with an ongoing project. The public release is designed for reproducibility of the **bulk GLE-NECK artifact pipeline**, not as a general-purpose molecular dynamics engine.
+Development is ongoing. The code and processed data reproduce the bulk binary-solute results. The confinement animation illustrates related work; confinement simulation and training code are maintained separately. Raw simulation trajectories are not included.
 
-Known scope boundaries:
-
-- the release focuses on the bulk binary-solute system,
-- confined-system workflows are not included in this repository,
-- raw simulation trajectories are not distributed,
-- the learned corrective kernel is intended as a transport-targeted effective response correction, not a unique microscopic projection-operator object. The authors observe depending on the optimization and regularization different functional forms may be obtained.
+The corrective kernel is fitted to transport observables. Different optimization and regularization choices can produce different kernel shapes with similar drift predictions, so the fitted kernel should not be interpreted as a unique microscopic memory function. See [result provenance](docs/provenance.md) for validation details and limitations.
 
 ---
 
 ## Publication Status
 
-Publication details are in progress and will be added here when available.
+The manuscript is in preparation.
 
 ---
 

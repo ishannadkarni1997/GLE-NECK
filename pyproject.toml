@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "gleneck"
 version = "0.1.0"
-description = "Clean reproducibility code for GLE-NECK coarse-grained transport."
+description = "Learning non-equilibrium memory-kernel corrections for coarse-grained molecular transport."
 readme = "README.md"
 requires-python = ">=3.10"
 license = {text = "MIT"}

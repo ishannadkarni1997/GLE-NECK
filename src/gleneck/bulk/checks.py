@@ -33,7 +33,6 @@ BAD_FILENAME_TOKENS = (
     ".DS_Store",
     "__pycache__",
     ".pytest_cache",
-    "confinement",
     "chapter5",
     "legacy",
     "midlong",
@@ -124,7 +123,7 @@ def check_bulk_reproducibility(root: Path, require_figures: bool = True) -> list
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Check public bulk GLE-NECK artifacts, figures, and repo hygiene.")
+    parser = argparse.ArgumentParser(description="Check bulk GLE-NECK data, generated figures, and tracked repository files.")
     parser.add_argument("--root", type=Path, default=Path.cwd(), help="Repository root or any path inside it.")
     parser.add_argument("--skip-figures", action="store_true", help="Do not require generated figures to be present.")
     return parser

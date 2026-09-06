@@ -151,7 +151,7 @@ def build_parser() -> argparse.ArgumentParser:
 def main() -> int:
     args = build_parser().parse_args()
     if args.n_a != args.n_b:
-        print("This first clean target generator expects equal A/B counts.", file=sys.stderr)
+        print("The reference simulation requires equal A and B particle counts.", file=sys.stderr)
         return 2
     if args.equilibration_samples < 1 or args.equilibrium_samples < 1 or args.field_samples < 1:
         print("Sample counts must be positive.", file=sys.stderr)

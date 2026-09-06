@@ -1,8 +1,8 @@
 # Data Manifest
 
-This repository commits only compact processed artifacts for the bulk transport workflow. They are sufficient to regenerate public figures and run smoke tests; they are not a substitute for archived raw trajectories.
+The included processed data can be used to regenerate the bulk figures and run the data-validation tests. Full simulation reruns also require the raw trajectories described below.
 
-## Bulk Processed Artifacts
+## Bulk Processed Data
 
 All files live in `data/processed/bulk/`.
 
@@ -17,14 +17,14 @@ All files live in `data/processed/bulk/`.
 | `gle_baseline_rdf.csv` | RDFs from the retained-solute baseline GLE |
 | `gle_baseline_vacf.csv` | VACF from the retained-solute baseline GLE |
 | `gle_baseline_mobility.csv` | Mobility response of the equilibrium baseline GLE |
-| `gleneck_mpt_mobility.csv` | Promoted multi-point GLE-NECK mobility response |
-| `gleneck_mpt_training_loss.csv` | Promoted multi-point training loss |
+| `gleneck_mpt_mobility.csv` | Multi-point GLE-NECK mobility response |
+| `gleneck_mpt_training_loss.csv` | Multi-point training loss |
 | `gleneck_validation_loss.csv` | Post-hoc train/held-out/full mobility MSE for SPT and MPT models over `E <= 2` |
-| `gleneck_kernel_evolution.npz` | Downsampled corrective-kernel history for public figures |
+| `gleneck_kernel_evolution.npz` | Downsampled corrective-kernel history for figures |
 | `gleneck_spt_mobility.csv` | Optional single-point mobility curves used in SPT/MPT comparison |
 | `gleneck_spt_training_loss.csv` | Optional single-point training losses used in SPT/MPT comparison |
-| `bulk_result_summary.json` | Machine-readable summary of the promoted bulk result |
+| `bulk_result_summary.json` | Model settings, training metrics, and diagnostic warnings |
 
-## Excluded Data
+## Inputs for Full Reruns
 
-The public repository excludes raw AA trajectories, retained-solute position/velocity histories, large training checkpoints, scheduler logs, exploratory notebooks, and draft manuscript files. Those data should be archived separately for publication if they are needed for full reruns.
+Raw AA trajectories, retained-solute position and velocity histories, and large training checkpoints are stored separately. They are not required to regenerate figures from the processed data in this repository.

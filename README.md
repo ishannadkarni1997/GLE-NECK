@@ -229,6 +229,34 @@ Generated figures are written to:
 figures/bulk/
 ```
 
+### Result animations
+
+The following animations summarize the field response, corrective-memory
+emergence, differentiable training, and confined-system memory structure.
+
+<table>
+<tr>
+<td align="center" width="50%">
+<img src="docs/assets/results_animations/gle_neck_mobility_response.gif" alt="GLE NECK mobility response" width="100%">
+<br><strong>GLE NECK mobility response</strong>
+</td>
+<td align="center" width="50%">
+<img src="docs/assets/results_animations/emergence_non_equilibrium_memory.gif" alt="Emergence of non-equilibrium memory with field" width="100%">
+<br><strong>Emergence of non-equilibrium memory with field</strong>
+</td>
+</tr>
+<tr>
+<td align="center" width="50%">
+<img src="docs/assets/results_animations/corrective_memory_training.gif" alt="Corrective memory emerging during training" width="100%">
+<br><strong>Corrective memory emerging during training</strong>
+</td>
+<td align="center" width="50%">
+<img src="docs/assets/results_animations/confinement_memory_emergence.gif" alt="Emergence of spatial non-equilibrium memory in confinement" width="100%">
+<br><strong>Emergence of spatial non-equilibrium memory</strong>
+</td>
+</tr>
+</table>
+
 ---
 
 ## Installation

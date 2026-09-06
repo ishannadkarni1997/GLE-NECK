@@ -339,9 +339,9 @@ Known scope boundaries:
 
 ---
 
-## Citation
+## Publication Status
 
-If this code is useful, please cite the associated manuscript when available.
+Publication details are in progress and will be added here when available.
 
 ---
 
